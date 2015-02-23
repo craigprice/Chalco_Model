@@ -17,6 +17,7 @@
 *.dSYM/Contents
 *.dSYM
 *.dSYM/
+*dSYM*
 bin/
 
 # Compiled source #
