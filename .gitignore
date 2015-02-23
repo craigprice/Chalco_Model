@@ -18,6 +18,7 @@
 *.dSYM
 *.dSYM/
 *dSYM*/*
+extractData.dSYM/Contents
 bin/
 
 # Compiled source #
