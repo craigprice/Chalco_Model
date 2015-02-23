@@ -13,6 +13,9 @@
 *.dat
 *.output
 *.pyc
+*.dSYM*
+*.dSYM/Contents
+*.dSYM
 *.dSYM/
 bin/
 
