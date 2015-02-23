@@ -13,7 +13,7 @@
 *.dat
 *.output
 *.pyc
-*.dSYM
+*.dSYM/
 bin/
 
 # Compiled source #
