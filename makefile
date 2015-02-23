@@ -1,16 +1,16 @@
 
-PROGRAM1=extractData
+PROGRAM1=bin/extractData
 PROGSRC1=extractData.cpp
 
 
-PROGRAM2=submitJobs
+PROGRAM2=bin/submitJobs
 PROGSRC2=submitJobs.cpp
 
-PROGRAM3=simulation
+PROGRAM3=bin/simulation
 PROGSRC3=lib/simulation.cpp
 
 
-PROGRAM4=submitSpecificJobs
+PROGRAM4=bin/submitSpecificJobs
 PROGSRC4=submitSpecificJobs.cpp
 
 CXXFLAGS+=-g -O3 -w
