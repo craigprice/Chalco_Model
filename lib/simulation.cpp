@@ -1,3 +1,15 @@
+/**
+ simulation.cpp
+ This file is the entrance portal to running the simulation. In it we specify
+ the input parameters to the simulation, create the MonteCarlo object that
+ is really the lattice of spins, thermalize the system, perform enough MC
+ updates to achieve our statistical uncertainty requirements, and then print
+ out the result of our simulation to a text file.
+ 
+  @author Craig Price (ccp134@psu.edu)
+  @version 1.0 2015/03/04
+ */
+
 #include <sstream>
 #include <iostream>
 #include <fstream>
@@ -8,17 +20,18 @@ const static double PI = 3.14159265358979323846;
 #include "MonteCarlo.h"
 #include "ClassicalSpin3D.cpp"
 #include "MonteCarlo.cpp"
-using namespace std;
+
 
 MCParameters input_parameters;
 
 int main(int argc, char*argv[]){
     if(argc != 21 && argc != 4){
-        std::cerr << "Need inputs" << std::endl;
+        std::cerr << "Need correct inputs" << std::endl;
         return 1;
     }
     //Set the random seed.
-    srand48( (unsigned long) time(0) );
+    input_parameters.monte_carlo_seed = (unsigned long) time(0);
+    srand48( input_parameters.monte_carlo_seed );
     MonteCarlo* MC;// = new MonteCarlo();
     //delete MC;
     if(argc == 21){
@@ -60,10 +73,10 @@ int main(int argc, char*argv[]){
     }
     //int numSweeps             =  500 * 1000;
     double durationOfSingleRun = 0.35;
-    int minSweepsToThermalize = 100;//100 * 1000;
+    int minSweepsToThermalize = 100 * 1000;
     int numSweepsBetwnConfigs = 6;
     bool outOfTime = false;
-    MC -> outputMag = "out.txt";
+    //MC -> outputMag = "out.txt";
     MC -> updateFourierTransformOnRecipLattice();
     
     //
@@ -94,6 +107,8 @@ int main(int argc, char*argv[]){
                     durationOfSingleRun);
     }
     
+    MC -> MD.totalTimeRunning = (MC -> MD.totalTimeRunning +
+                                 (clock() - MC -> MD.timeOfInitialization));
     MC->finalPrint();
     std::cout << "done!" << std::endl;
     return 0;

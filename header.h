@@ -17,16 +17,10 @@
 #include <stdlib.h>
 #include <cmath>
 #include <unistd.h>
+const static double PI = 3.14159265358979323846;
+#include "lib/MonteCarlo.h"
 using namespace std;
 
-const static int numVectors = 5*3;
-const static int neighbors = 1+71;
-const static int numTemps = 1000;
-const static int maxNumSpins = 204;
-const int spinDim = 3;
-const static unsigned int FTTOUPDATES = 4000;
-const static unsigned int CORRTOUPDATES = 20;
-const double PI = 3.14159265358979323846;
 
 
 class simParameters{
@@ -40,10 +34,11 @@ public:
     bool    isJ23;//J23 Hamiltonian
     bool    isK12;
     double  J1;
-    double  K1;
     double  J2;
     double  J3;
+    double  K1;
     double  K2;
+    double  K3;
     bool    isCub;
     double  D;
     bool    isB;
@@ -84,6 +79,35 @@ public:
         celB                = 0;
         celC                = 0;
         KbT                 = 0;
+    }
+    simParameters(string fileName_, MCParameters params){
+        fileName            = fileName_;
+        isDomainWalls       = 0;
+        directionOfDomain   = 0;
+        isRotHam            = 0;
+        isA                 = 0;
+        a                   = 0;
+        isJ23               = 0;
+        isK12               = 0;
+        J1                  = params.j1;
+        J2                  = params.j2;
+        J3                  = params.j3;
+        K1                  = params.k1;
+        K2                  = params.k2;
+        K3                  = params.k3;
+        isCub               = 1;
+        D                   = params.cubicD;
+        isB                 = params.isBField;
+        bx                  = params.bField_x;
+        by                  = params.bField_y;
+        bz                  = params.bField_z;
+        bMag                = params.bFieldMag;
+        isPhi               = 0;
+        phi                 = 0;
+        celA                = params.cellsA;
+        celB                = params.cellsB;
+        celC                = params.cellsC;
+        KbT                 = params.KbT;
     }
     simParameters(string fileName_,
                   bool isDomainWalls_,
@@ -191,27 +215,18 @@ public:
         cout << "simParameter Object, toString(): " << endl;
         cout << "fileName:" << endl;
         cout << fileName << endl;
-        cout << "isDomainWalls:................" << isDomainWalls << endl;
-        cout << "directionOfDomain:............" << directionOfDomain << endl;
-        cout << "isRotHam:....................." << isRotHam << endl;
-        cout << "isA:.........................." << isA << endl;
-        cout << "a:............................" << a << endl;
-        cout << "isJ23:........................" << isJ23 << endl;
-        cout << "isK12:........................" << isK12 << endl;
         cout << "J1:..........................." << J1 << endl;
-        cout << "K1:..........................." << K1 << endl;
         cout << "J2:..........................." << J2 << endl;
         cout << "J3:..........................." << J3 << endl;
+        cout << "K1:..........................." << K1 << endl;
         cout << "K2:..........................." << K2 << endl;
-        cout << "isCub:........................" << isCub << endl;
+        cout << "K3:..........................." << K3 << endl;
         cout << "D:............................" << D << endl;
         cout << "isB:.........................." << isB << endl;
         cout << "bx:..........................." << bx << endl;
         cout << "by:..........................." << by << endl;
         cout << "bz:..........................." << bz << endl;
         cout << "bMag:........................." << bMag << endl;
-        cout << "isPhi:........................" << isPhi << endl;
-        cout << "phi:.........................." << phi << endl;
         cout << "celA:........................." << celA << endl;
         cout << "celB:........................." << celB << endl;
         cout << "celC:........................." << celC << endl;
@@ -260,27 +275,18 @@ void getAllSimFiles(vector<simParameters>& v, string path){
         cout<<line<<endl;
         simParameters sp;
         sp.fileName = line.erase(line.find_last_not_of(" \n\r\t")+1);
-        sp.isDomainWalls =      (bool)   atoi(extractParamValueFromTitle(line, "isDom_").c_str());
-        sp.directionOfDomain =  (int)    atoi(extractParamValueFromTitle(line, "DomDir_").c_str());
-        sp.isRotHam =           (bool)   atoi(extractParamValueFromTitle(line, "isRot_").c_str());
-        sp.isA =                (bool)   atoi(extractParamValueFromTitle(line, "isA_").c_str());
-        sp.a =                  (double) atof(extractParamValueFromTitle(line, "a_").c_str());
-        sp.isJ23 =              (bool)   atoi(extractParamValueFromTitle(line, "isJ23_").c_str());
-        sp.isK12 =              (bool)   atoi(extractParamValueFromTitle(line, "isK12_").c_str());
         sp.J1 =                 (double) atof(extractParamValueFromTitle(line, "J1_").c_str());
-        sp.K1 =                 (double) atof(extractParamValueFromTitle(line, "K1_").c_str());
         sp.J2 =                 (double) atof(extractParamValueFromTitle(line, "J2_").c_str());
         sp.J3 =                 (double) atof(extractParamValueFromTitle(line, "J3_").c_str());
+        sp.K1 =                 (double) atof(extractParamValueFromTitle(line, "K1_").c_str());
         sp.K2 =                 (double) atof(extractParamValueFromTitle(line, "K2_").c_str());
-        sp.isCub =              (bool)   atoi(extractParamValueFromTitle(line, "isCub_").c_str());
+        sp.K3 =                 (double) atof(extractParamValueFromTitle(line, "K3_").c_str());
         sp.D =                  (double) atof(extractParamValueFromTitle(line, "D_").c_str());
         sp.isB =                (bool)   atoi(extractParamValueFromTitle(line, "isB_").c_str());
         sp.bx =                 (double) atof(extractParamValueFromTitle(line, "bx_").c_str());
         sp.by =                 (double) atof(extractParamValueFromTitle(line, "by_").c_str());
         sp.bz =                 (double) atof(extractParamValueFromTitle(line, "bz_").c_str());
         sp.bMag =               (double) atof(extractParamValueFromTitle(line, "bMag_").c_str());
-        sp.isPhi =              (bool)   atoi(extractParamValueFromTitle(line, "isPhi_").c_str());
-        sp.phi =                (double) atof(extractParamValueFromTitle(line, "phi_").c_str());
         sp.celA =               (int)    atoi(extractParamValueFromTitle(line, "celA_").c_str());
         sp.celB =               (int)    atoi(extractParamValueFromTitle(line, "celB_").c_str());
         sp.celC =               (int)    atoi(extractParamValueFromTitle(line, "celC_").c_str());
@@ -297,18 +303,12 @@ bool isMatchParameters(const simParameters sp, const simParameters sp2) {
     double eps = 1e-5;
     //sp2.toString();
     if(
-       (sp.isDomainWalls        == sp2.isDomainWalls)&&
-       (sp.directionOfDomain    == sp2.directionOfDomain)&&
-       (sp.isRotHam             == sp2.isRotHam)&&
-       (sp.isA                  == sp2.isA)&&
-       (fabs(sp.a               -  sp2.a) < eps)&&
-       (sp.isJ23                == sp2.isJ23)&&
-       (sp.isK12                == sp2.isK12)&&
        (fabs(sp.J1              -  sp2.J1) < eps)&&
-       (fabs(sp.K1              -  sp2.K1) < eps)&&
        (fabs(sp.J2              -  sp2.J2) < eps)&&
        (fabs(sp.J3              -  sp2.J3) < eps)&&
+       (fabs(sp.K1              -  sp2.K1) < eps)&&
        (fabs(sp.K2              -  sp2.K2) < eps)&&
+       (fabs(sp.K3              -  sp2.K3) < eps)&&
        (sp.isCub                == sp2.isCub)&&
        (fabs(sp.D               -  sp2.D) < eps)&&
        (sp.isB                  == sp2.isB)&&
@@ -316,8 +316,6 @@ bool isMatchParameters(const simParameters sp, const simParameters sp2) {
        (fabs(sp.by              -  sp2.by) < eps)&&
        (fabs(sp.bz              -  sp2.bz) < eps)&&
        (fabs(sp.bMag            -  sp2.bMag) < eps)&&
-       (sp.isPhi                == sp2.isPhi)&&
-       (fabs(sp.phi             -  sp2.phi) < eps)&&
        (sp.celA                 == sp2.celA)&&
        (sp.celB                 == sp2.celB)&&
        (sp.celC                 == sp2.celC)&&

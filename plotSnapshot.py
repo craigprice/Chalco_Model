@@ -12,9 +12,7 @@ PI = 3.14159265358979323846;
 
 #Start Main Function
 #Get list of all sim files
-#pathToSimFiles ='/Volumes/Toshi/dataFromSimulations/honV9/hep2/dataFiles'
-#pathToSimFiles ='/Volumes/Toshi/dataFromSimulations/duplicateFiles'
-pathToSimFiles ='/Users/Work/Documents/perkins_research/honV9K1K2-2BZ/copyFiles'
+pathToSimFiles ='/Users/Work/Documents/perkins_research/chalco_model/Chalco_Model/dataFiles'
 simFiles = [ f for f in listdir(pathToSimFiles) if f.find('.txt') > 0 ]
 
 #font = {'family' : 'monospace'}
@@ -23,7 +21,7 @@ mpl.rc('font',**{'serif':['Helvetica']})
 #mpl.rc('text', usetex=True)
 mpl.rc('text.latex', preamble=r'\usepackage{cmbright}')
 
-#For each Sim File extract and make a plot of the FT
+#For each Sim File extract and make a plot of the spins
 for f in simFiles:
     print f
     opName = f[f.find('OP_')+3:-4]
@@ -40,14 +38,7 @@ for f in simFiles:
         tempStr = tempStr.replace('.txt','',1)
         graphDescription = graphDescription + pieces[p] + ' = ' + tempStr
 
-    if f.find('K1_1') != -1      and f.find('K2_0') != -1:      graphTitle += r'$\varphi = 0'
-    if f.find('K1_0.707') != -1  and f.find('K2_0.707') != -1:  graphTitle += r'$\varphi = \frac{\Pi}{4}'
-    if f.find('K1_0') != -1      and f.find('K2_1') != -1:      graphTitle += r'$\varphi = \frac{\Pi}{2}'
-    if f.find('K1_-0.707') != -1 and f.find('K2_0.707') != -1:  graphTitle += r'$\varphi = \frac{3\Pi}{4}'
-    if f.find('K1_-1') != -1     and f.find('K2_0') != -1:      graphTitle += r'$\varphi = \Pi'
-    if f.find('K1_-0.707') != -1 and f.find('K2_-0.707') != -1: graphTitle += r'$\varphi = \frac{5\Pi}{4}'
-    if f.find('K1_0') != -1      and f.find('K2_-1') != -1:     graphTitle += r'$\varphi = \frac{3\Pi}{2}'
-    if f.find('K1_0.707') != -1  and f.find('K2_-0.707') != -1: graphTitle += r'$\varphi = \frac{7\Pi}{4}'
+    #if f.find('K1_1') != -1      and f.find('K2_0') != -1:      graphTitle += r'$\varphi = 0'
     
     if graphDescription.find('KbT') != -1:
         t = r',\quad T' + graphDescription[graphDescription.find('KbT')+3:].strip() + r'$'
@@ -82,10 +73,10 @@ for f in simFiles:
         
     #cellsA = cellsA/3#edit
     #cellsB = cellsB/3#edit
-    avector_1x = 1*1;
-    avector_2x = 1*0.5;
-    avector_1y = 1*0;
-    avector_2y = 1*math.sqrt(3.0) / 2.0; 
+    avector_1x = 1;
+    avector_2x = 0;
+    avector_1y = 0;
+    avector_2y = 1; 
     delta_x = 0
     delta_y = 1.0/math.sqrt(3.0)
     
@@ -145,8 +136,8 @@ for f in simFiles:
         #if ((xPos * avector_1y + yPos * avector_2y + sPos * delta_y) / cellsB) < 0.3:#edit
         #    continue;
             
-        rvector_x.append((xPos * avector_1x + yPos * avector_2x + sPos * delta_x) / cellsA)
-        rvector_y.append((xPos * avector_1y + yPos * avector_2y + sPos * delta_y) / cellsB)
+        rvector_x.append((xPos * avector_1x + yPos * avector_2x) / cellsA)
+        rvector_y.append((xPos * avector_1y + yPos * avector_2y) / cellsB)
         spin_x_u.append(spin_x * xSpinDirection_x)
         spin_x_v.append(spin_x * xSpinDirection_y)
         spin_y_u.append(spin_y * ySpinDirection_x)
@@ -180,7 +171,7 @@ for f in simFiles:
     labelbottom='off',
     labelleft='off')#edit    
     #plt.savefig('figuresSnapshot/'+ f[:-4] + '.eps')
-    plt.savefig('figuresSnapshot/'+ graphTitle.strip().replace('\\','') + '.eps',dpi=100)
+    plt.savefig('figuresSnapshot/'+ graphTitle.strip().replace('\\','') + '.png',dpi=100)
     
     
 print "\a"
