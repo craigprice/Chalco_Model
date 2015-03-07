@@ -562,6 +562,7 @@ public:
      @return energy from all interactions with the spin a
      */
     double getLocalEnergy(const ClassicalSpin3D& a, bool fromSpinFlip) const;
+    double getLocalEnergy0(const ClassicalSpin3D& a, bool fromSpinFlip) const;
     
     /**
      Performs the spin flipping over the each lattice site once.

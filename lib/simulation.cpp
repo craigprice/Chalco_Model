@@ -17,8 +17,8 @@
 #include <ctime>
 #include "ClassicalSpin3D.h"
 #include "MonteCarlo.h"
-//#include "ClassicalSpin3D.cpp"
-//#include "MonteCarlo.cpp"
+#include "ClassicalSpin3D.cpp"
+#include "MonteCarlo.cpp"
 
 int main(int argc, char*argv[]){
     if(argc != 22 && argc != 4){
@@ -115,9 +115,9 @@ int main(int argc, char*argv[]){
                     durationOfSingleRun);
     }
     
-    MC -> MD.totalTimeRunning = (MC -> MD.totalTimeRunning +
-                                 (clock() - MC -> MD.timeOfInitialization) *
-                                 (1.0/(CLOCKS_PER_SEC*1.0)) * 60.0 * 60.0);
+    MC -> MD.totalTimeRunning = (clock() - MC -> MD.timeOfInitialization);
+    double hours_elapsed = MC -> MD.totalTimeRunning * (1.0/(CLOCKS_PER_SEC*1.0)) / (60.0 * 60.0);
+    std::cout << hours_elapsed << std::endl;
     MC->finalPrint();
     std::cout << "done!" << std::endl;
     return 0;

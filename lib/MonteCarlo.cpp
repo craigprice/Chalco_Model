@@ -1725,6 +1725,25 @@ void MonteCarlo::adjustRange(){
 
 bool MonteCarlo::thermalize(double KbT_, int numSweepsToDo, double durationOfSingleRun){
     
+    /*
+    double totalInteraction = 0;
+
+    
+    clock_t t0 = clock();
+    
+    totalInteraction = getLocalEnergy(lattice[0][0][0][0],true);
+    
+    cout<< clock() - t0 << endl;
+    t0 = clock();
+    
+    totalInteraction = getLocalEnergy0(lattice[0][0][0][0],true);
+    
+    cout << clock() - t0 << endl;
+    totalInteraction = 10;
+    cout << totalInteraction << endl;
+    exit(0);
+    */
+    
     double oldKbT = MCP.KbT;
     MCP.KbT = KbT_;
     
@@ -2320,7 +2339,7 @@ void MonteCarlo::addToMagStats(){
 
 
 
-double MonteCarlo::getLocalEnergy(const ClassicalSpin3D& a, const bool fromSpinFlip) const{
+double MonteCarlo::getLocalEnergy0(const ClassicalSpin3D& a, const bool fromSpinFlip) const{
     double totalInteraction = 0;
     
     /*
@@ -2340,6 +2359,69 @@ double MonteCarlo::getLocalEnergy(const ClassicalSpin3D& a, const bool fromSpinF
      ClassicalSpin3D a3_mymy = getSpinInTheMinusYDir(a1_my);
      */
     
+    
+    ClassicalSpin3D a1_x = *NN_x[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a1_mx = *NN_mx[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a1_y = *NN_y[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a1_my = *NN_my[a.xPos][a.yPos][a.sPos][a.zPos];
+    
+    ClassicalSpin3D a2_xy =   *NN2_xy[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a2_mxy =  *NN2_mxy[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a2_mxmy = *NN2_mxmy[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a2_xmy =  *NN2_xmy[a.xPos][a.yPos][a.sPos][a.zPos];
+    
+    ClassicalSpin3D a3_xx =   *NN3_xx[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a3_mxmx = *NN3_mxmx[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a3_yy =   *NN3_yy[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a3_mymy = *NN3_mymy[a.xPos][a.yPos][a.sPos][a.zPos];
+    
+    double interactionH = MCP.j1 * (a.dotProd(a1_x) +
+                                    a.dotProd(a1_mx) +
+                                    a.dotProd(a1_y) +
+                                    a.dotProd(a1_my));
+    
+    //Heisenberg interaction
+    //2nd Neighbor interaction
+    double interactionH2 = MCP.j2 * (a.dotProd(a2_xy) + a.dotProd(a2_mxy) +
+                                     a.dotProd(a2_mxmy) + a.dotProd(a2_xmy));
+    
+    //3rd Neighbor interaction
+    double interactionH3 = MCP.j3 * (a.dotProd(a3_xx) +
+                                     a.dotProd(a3_mxmx) +
+                                     a.dotProd(a3_yy) +
+                                     a.dotProd(a3_mymy));
+    
+    double temp = (a.dotProd(a1_x) +
+                   a.dotProd(a1_mx) +
+                   a.dotProd(a1_y) +
+                   a.dotProd(a1_my));
+    double interactionK = MCP.k1 * temp * temp;
+    
+    double interactionCubic = MCP.cubicD * (-1.0) * a.z * a.z;
+    
+    if(fromSpinFlip)
+    {
+        totalInteraction += interactionH + interactionH2 + interactionH3 + interactionK + interactionCubic;
+    }else
+    {//From Finding the total E of the lattice
+        totalInteraction += (interactionH + interactionH2 + interactionH3 + interactionK + interactionCubic) / 2.0;
+    }
+    
+    
+    //B field
+    if (MCP.isBField) {
+        double interactionB = (-1) * (MCP.bField_xNorm * a.x +
+                                      MCP.bField_yNorm * a.y +
+                                      MCP.bField_zNorm * a.z);
+        totalInteraction += interactionB;
+    }
+    
+    return totalInteraction;
+    
+}
+
+double MonteCarlo::getLocalEnergy(const ClassicalSpin3D& a, const bool fromSpinFlip) const{
+    double totalInteraction = 0;
     
     ClassicalSpin3D a1_x = *NN_x[a.xPos][a.yPos][a.sPos][a.zPos];
     ClassicalSpin3D a1_mx = *NN_mx[a.xPos][a.yPos][a.sPos][a.zPos];
