@@ -6,8 +6,8 @@
  updates to achieve our statistical uncertainty requirements, and then print
  out the result of our simulation to a text file.
  
-  @author Craig Price (ccp134@psu.edu)
-  @version 1.0 2015/03/04
+ @author Craig Price (ccp134@psu.edu)
+ @version 1.0 2015/03/04
  */
 
 #include <sstream>
@@ -15,26 +15,22 @@
 #include <fstream>
 #include <cmath>
 #include <ctime>
-const static double PI = 3.14159265358979323846;
 #include "ClassicalSpin3D.h"
 #include "MonteCarlo.h"
-#include "ClassicalSpin3D.cpp"
-#include "MonteCarlo.cpp"
-
-
-MCParameters input_parameters;
+//#include "ClassicalSpin3D.cpp"
+//#include "MonteCarlo.cpp"
 
 int main(int argc, char*argv[]){
-    if(argc != 21 && argc != 4){
+    if(argc != 22 && argc != 4){
         std::cerr << "Need correct inputs" << std::endl;
         return 1;
     }
-    //Set the random seed.
-    input_parameters.monte_carlo_seed = (unsigned long) time(0);
-    srand48( input_parameters.monte_carlo_seed );
+    
+    MonteCarlo::MCParameters input_parameters;
+    
     MonteCarlo* MC;// = new MonteCarlo();
     //delete MC;
-    if(argc == 21){
+    if(argc == 22){
         input_parameters.j1     =           atof(argv[2]);
         input_parameters.j2     =           atof(argv[3]);
         input_parameters.j3     =           atof(argv[4]);
@@ -56,10 +52,20 @@ int main(int argc, char*argv[]){
         input_parameters.cellsC      =           atoi(argv[16]);
         
         input_parameters.KbT         =           atof(argv[17]);
-
+        
         input_parameters.estimatedTc =           atof(argv[18]);
         input_parameters.numSweepsToPerformTotal = atoi(argv[19]);
-        input_parameters.path    =           argv[20];
+        input_parameters.path        =           argv[20];
+        
+        if (atoi(argv[21]) == -1){
+            //Set the random seed.
+            input_parameters.monte_carlo_seed = (unsigned long) time(0);
+        }else{
+            //Set the seed from the command line
+            input_parameters.monte_carlo_seed = atoi(argv[21]);
+        }
+        
+        srand48( input_parameters.monte_carlo_seed );
         
         MC = new MonteCarlo(input_parameters);
         
@@ -68,21 +74,22 @@ int main(int argc, char*argv[]){
         std::string filename = argv[3];
         MC = new MonteCarlo(reThermalize, filename);
     }else{
-        cerr<<"inputs"<<endl;
+        std::cerr<<"inputs"<<std::endl;
         exit(3161990);
     }
     //int numSweeps             =  500 * 1000;
-    double durationOfSingleRun = 0.35;
+    double durationOfSingleRun = 1/60.0;
     int minSweepsToThermalize = 100 * 1000;
     int numSweepsBetwnConfigs = 6;
     bool outOfTime = false;
     //MC -> outputMag = "out.txt";
-    MC -> updateFourierTransformOnRecipLattice();
+    //MC -> metropolisSweep();
+    //MC -> updateFourierTransformOnRecipLattice();
     
     //
     //Runs the lattice without taking data at these temperatures to get the
     //spins pointed in approximately the correct direction.
-    
+    std::cout << "Thermalizing" << std::endl;
     if(MC -> MD.numSweepsUsedToThermalize < (int) (minSweepsToThermalize / 2)){
         outOfTime = MC -> thermalize(3.0 * MC -> MCP.estimatedTc,
                                      (int) (minSweepsToThermalize / 2),
@@ -99,6 +106,7 @@ int main(int argc, char*argv[]){
         outOfTime = MC -> isThermalized(durationOfSingleRun);
     }
     
+    std::cout << "Sweeping and summing over configurations" << std::endl;
     if(!outOfTime && MC -> MD.isThermal){
         //To run a snapshot, change numSweeps, sweep().
         //MC -> sweepSnapshot(numSweeps, 6, 9);//This hasn't been edited - check function
@@ -108,7 +116,8 @@ int main(int argc, char*argv[]){
     }
     
     MC -> MD.totalTimeRunning = (MC -> MD.totalTimeRunning +
-                                 (clock() - MC -> MD.timeOfInitialization));
+                                 (clock() - MC -> MD.timeOfInitialization) *
+                                 (1.0/(CLOCKS_PER_SEC*1.0)) * 60.0 * 60.0);
     MC->finalPrint();
     std::cout << "done!" << std::endl;
     return 0;

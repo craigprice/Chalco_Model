@@ -7,7 +7,7 @@
  
  @author Craig Price
  @version 1.0 2015/03/04
-*/
+ */
 
 #ifndef MONTECARLO_H
 #define MONTECARLO_H
@@ -20,254 +20,260 @@
 #include "ClassicalSpin3D.h"
 class ClassicalSpin3D;
 
-/**************************************************************************/
-//Global Variables
-/**************************************************************************/
 
-//Numerical precision for printing strings
-const static unsigned int PR = 14;
-
-//Number of Vector order parameters
-const static unsigned int NUMVECTORS = 5;
-
-//dimension of spin. Components to be manipulated at each site.
-const static unsigned int SPINDIMEN = 3;
-
-//Number of powers of the order parameter kept e.g. to the fourth power
-const static unsigned int POWERSOP = 4;
-
-//Operations done on the vector OP over the entire lattice.
-//e.g. Order Parameter, X component of the OP, Y component of the OP...
-const static unsigned int TYPESOP = 4;
-
-//A large number that is used to initialize arrays that hold information about
-//correlations.
-const static unsigned int NUMCORRSPINSBIG = 210*2;
-
-//Number of configurations performed before calculating the Fourie Transform.
-const static unsigned int FTTOUPDATES = 4000;
-
-//Number of configurations performed before calculating the correlation function
-const static unsigned int CORRTOUPDATES = 20;
-
-//Number of sublattices
-const static unsigned int NUMSUBLATTICES = 4;
-
-//Real space lattice vector 1st
-const static double A_VECTOR_1[2] = {
-    1,
-    0};
-
-//Real space lattice vecotor 2nd
-const static double A_VECTOR_2[2] = {
-    0,
-    1};
-
-//Reciprocal space lattice vector 1st
-const static double B_VECTOR_1[2] = {
-    2.0 * PI * 1,
-    2.0 * PI * 0};
-
-//Reciprocal space lattice vector 2nd
-const static double B_VECTOR_2[2] = {
-    2.0 * PI * 0,
-    2.0 * PI * 1};
-
-//String label of each of the vector order parameters
-std::string orderParameter[NUMVECTORS] = {
-    "Magnetization",
-    "Neel",
-    "Stripy-x",
-    "Stripy-y",
-    "Stripy"
-};
-
-//Small string label for each component of the order parameters
-std::string orderParameterSmall[NUMVECTORS] = {
-    "M",
-    "N",
-    "SX",
-    "SY",
-    "S"
-};
-
-//String label for each component of the order parameters
-std::string spinComponent[SPINDIMEN] = {
-    "X direction",
-    "Y direction",
-    "Z direction",
-};
-
-//A small string label for each component of the order parameters - used when
-//printing many repititions of the order parameters - like histogramming the
-//data
-std::string spinComponentSmall[SPINDIMEN] = {
-    "X",
-    "Y",
-    "Z",
-};
-
-//String label for each power of the order parameters saved.
-std::string powerOP[POWERSOP] = {
-    " to the 1st power",
-    " to the 2nd power",
-    " to the 3rd power",
-    " to the 4th power"
-};
-
-//String label for each of the operations saved that are performed on the vector
-//order parameters.
-std::string typeOP[TYPESOP] = {
-    "Order Parameter",
-    "X Component of the Spin",
-    "Y Component of the Spin",
-    "Z Component of the Spin",
-};
-
-
-
-/**************************************************************************/
-//Groups of constants for Monte Carlo
-/**************************************************************************/
-
-//Arrays to contain the string names for the sum over order paramets
-std::string sumOPNames       [NUMVECTORS][TYPESOP][POWERSOP] = {""};
-std::string charOPNames      [NUMVECTORS][TYPESOP] = {""};
-
-//The information about the FT at a site in reciprocal space. Analoge to the
-//"ClassicalSpin3D" object.
-struct FourierTransformOfSpin{
-    double ReXComponent;
-    double ReYComponent;
-    double ReZComponent;
-    double ImXComponent;
-    double ImYComponent;
-    double ImZComponent;
-    double magnitude;
-};
-
-//Input parameters for Monte Carlo simulation. Used in the program as "MCP"
-struct MCParameters{
-    double  j1;
-    double  j2;
-    double  j3;
-    double  k1;
-    double  k2;
-    double  k3;
-    
-    double  cubicD;
-    
-    bool    isBField;
-    double  bField_x;
-    double  bField_y;
-    double  bField_z;
-    double  bFieldMag;
-    
-    int     cellsA;
-    int     cellsB;
-    int     cellsC;
-    
-    double  KbT;
-    double  estimatedTc;
-    int     numSweepsToPerformTotal;
-    
-    double  bField_xNorm;
-    double  bField_yNorm;
-    double  bField_zNorm;
-    std::string path;
-    
-    unsigned long monte_carlo_seed;
-};
-
-//Characteristics of the current simulation. Used in the program as "MD"
-struct MetropolisDetails{
-    
-    //Number of all spin flip attempts
-    double  flipAttempts;
-    
-    //Number of successful spin flips. Want this to be about 65% of total.
-    double  successfulFlips;
-    
-    //the polar angle theta that defines the polar cap within which the spin
-    //flips within. At low temperature, the theta becomes small, and at
-    //high temperature, it goes to PI.
-    double  range;
-    double  rangeOld;
-    
-    //The number of configurations for which the magnetization was summed over.
-    int     numConfigsDone;
-    
-    //whether the system is thermal or not.
-    bool    isThermal;
-    
-    //A few sweeps are done to see whether our system has converged so that the
-    //change of the order parameters is ~< 1%
-    int     numSweepsPerformedToCheckIfThermalized;
-    
-    //Recording how many sweeps we've done on the lattice, but these will not
-    //be considered for our sum over magnetic order parameters.
-    int     numSweepsUsedToThermalize;
-    
-    //Total number of monte carlo sweeps over the whole lattice.
-    int     numSweepsPerformed;
-    
-    clock_t timeOfInitialization;
-    
-    clock_t totalTimeRunning;
-};
-
-//Running sums of the Order Parameters in powers of 1, 2, 3, 4.
-struct LatticeCharacteristics{
-    
-    double sumE[POWERSOP];//components are pow ^ 1/2/3/4
-    double sumPX[POWERSOP];
-    double sumPY[POWERSOP];
-    double sumQ[POWERSOP];
-    
-    //Sum over the Characteristics of the Order Parameters.
-    double sumOP[NUMVECTORS][TYPESOP][POWERSOP];
-    
-    //Sum over the correlation function of the the different OP's
-    double sumOPCorrFunc[NUMVECTORS][TYPESOP][NUMCORRSPINSBIG];
-    double sumECorrFunc[NUMCORRSPINSBIG];
-    double sumPXCorrFunc[NUMCORRSPINSBIG];
-    double sumPYCorrFunc[NUMCORRSPINSBIG];
-    double sumQCorrFunc[NUMCORRSPINSBIG];
-    
-};
-
-//Snapshot of the current order parameters
-//All Order parameters are per site
-struct OrderParameters{
-    
-    //Total E, E not per site
-    double E;
-    
-    //dot product of spin in the x direction
-    double PX;
-    
-    //dot product of spin in the y direction
-    double PY;
-    
-    //Nematic order parameter. <PX-PY>
-    double Q;
-    
-    //Characteristics of the Order Parameters. These are vector order parameters.
-    double charOP[NUMVECTORS][TYPESOP];
-    
-    //correlation functions of each of the order parameters
-    double corrFunc[NUMVECTORS][TYPESOP][NUMCORRSPINSBIG];
-    double ECorrFunc[NUMCORRSPINSBIG];
-    double PXCorrFunc[NUMCORRSPINSBIG];
-    double PYCorrFunc[NUMCORRSPINSBIG];
-    double QCorrFunc[NUMCORRSPINSBIG];
-    
-};
 
 //The object that contains all the information about the simulation and contains
 //the spin objects.
 class MonteCarlo {
 public:
+    
+    /**************************************************************************/
+    //Global Variables
+    /**************************************************************************/
+    
+    
+    const double PI = 3.14159265358979323846;
+    
+    //Numerical precision for printing strings
+    const static unsigned int PR = 14;
+    
+    //Number of Vector order parameters
+    const static unsigned int NUMVECTORS = 5;
+    
+    //dimension of spin. Components to be manipulated at each site.
+    const static unsigned int SPINDIMEN = 3;
+    
+    //Number of powers of the order parameter kept e.g. to the fourth power
+    const static unsigned int POWERSOP = 4;
+    
+    //Operations done on the vector OP over the entire lattice.
+    //e.g. Order Parameter, X component of the OP, Y component of the OP...
+    const static unsigned int TYPESOP = 4;
+    
+    //A large number that is used to initialize arrays that hold information about
+    //correlations.
+    const static unsigned int NUMCORRSPINSBIG = 210*2;
+    
+    //Number of configurations performed before calculating the Fourie Transform.
+    const static unsigned int FTTOUPDATES = 4000*10;
+    
+    //Number of configurations performed before calculating the correlation function
+    const static unsigned int CORRTOUPDATES = 20;
+    
+    //Number of sublattices
+    const static unsigned int NUMSUBLATTICES = 4;
+    
+    //Real space lattice vector 1st
+    const double A_VECTOR_1[2] = {
+        1,
+        0};
+    
+    //Real space lattice vecotor 2nd
+    const double A_VECTOR_2[2] = {
+        0,
+        1};
+    
+    //Reciprocal space lattice vector 1st
+    const double B_VECTOR_1[2] = {
+        2.0 * PI * 1,
+        2.0 * PI * 0};
+    
+    //Reciprocal space lattice vector 2nd
+    const double B_VECTOR_2[2] = {
+        2.0 * PI * 0,
+        2.0 * PI * 1};
+    
+    //String label of each of the vector order parameters
+    std::string orderParameter[NUMVECTORS] = {
+        "Magnetization",
+        "Neel",
+        "Stripy-x",
+        "Stripy-y",
+        "Stripy"
+    };
+    
+    //Small string label for each component of the order parameters
+    std::string orderParameterSmall[NUMVECTORS] = {
+        "M",
+        "N",
+        "SX",
+        "SY",
+        "S"
+    };
+    
+    //String label for each component of the order parameters
+    std::string spinComponent[SPINDIMEN] = {
+        "X direction",
+        "Y direction",
+        "Z direction",
+    };
+    
+    //A small string label for each component of the order parameters - used when
+    //printing many repititions of the order parameters - like histogramming the
+    //data
+    std::string spinComponentSmall[SPINDIMEN] = {
+        "X",
+        "Y",
+        "Z",
+    };
+    
+    //String label for each power of the order parameters saved.
+    std::string powerOP[POWERSOP] = {
+        " to the 1st power",
+        " to the 2nd power",
+        " to the 3rd power",
+        " to the 4th power"
+    };
+    
+    //String label for each of the operations saved that are performed on the vector
+    //order parameters.
+    std::string typeOP[TYPESOP] = {
+        "Order Parameter",
+        "X Component of the Spin",
+        "Y Component of the Spin",
+        "Z Component of the Spin",
+    };
+    
+    
+    
+    /**************************************************************************/
+    //Groups of constants for Monte Carlo
+    /**************************************************************************/
+    
+    //Arrays to contain the string names for the sum over order paramets
+    std::string sumOPNames       [NUMVECTORS][TYPESOP][POWERSOP] = {""};
+    std::string charOPNames      [NUMVECTORS][TYPESOP] = {""};
+    
+    //The information about the FT at a site in reciprocal space. Analoge to the
+    //"ClassicalSpin3D" object.
+    struct FourierTransformOfSpin{
+        double ReXComponent;
+        double ReYComponent;
+        double ReZComponent;
+        double ImXComponent;
+        double ImYComponent;
+        double ImZComponent;
+        double magnitude;
+    };
+    
+    //Input parameters for Monte Carlo simulation. Used in the program as "MCP"
+    struct MCParameters{
+        double  j1;
+        double  j2;
+        double  j3;
+        double  k1;
+        double  k2;
+        double  k3;
+        
+        double  cubicD;
+        
+        bool    isBField;
+        double  bField_x;
+        double  bField_y;
+        double  bField_z;
+        double  bFieldMag;
+        
+        int     cellsA;
+        int     cellsB;
+        int     cellsC;
+        
+        double  KbT;
+        double  estimatedTc;
+        int     numSweepsToPerformTotal;
+        
+        double  bField_xNorm;
+        double  bField_yNorm;
+        double  bField_zNorm;
+        std::string path;
+        
+        unsigned long monte_carlo_seed;
+    };
+    
+    //Characteristics of the current simulation. Used in the program as "MD"
+    struct MetropolisDetails{
+        
+        //Number of all spin flip attempts
+        double  flipAttempts;
+        
+        //Number of successful spin flips. Want this to be about 65% of total.
+        double  successfulFlips;
+        
+        //the polar angle theta that defines the polar cap within which the spin
+        //flips within. At low temperature, the theta becomes small, and at
+        //high temperature, it goes to PI.
+        double  range;
+        double  rangeOld;
+        
+        //The number of configurations for which the magnetization was summed over.
+        int     numConfigsDone;
+        
+        //whether the system is thermal or not.
+        bool    isThermal;
+        
+        //A few sweeps are done to see whether our system has converged so that the
+        //change of the order parameters is ~< 1%
+        int     numSweepsPerformedToCheckIfThermalized;
+        
+        //Recording how many sweeps we've done on the lattice, but these will not
+        //be considered for our sum over magnetic order parameters.
+        int     numSweepsUsedToThermalize;
+        
+        //Total number of monte carlo sweeps over the whole lattice.
+        int     numSweepsPerformed;
+        
+        clock_t timeOfInitialization;
+        
+        clock_t totalTimeRunning;
+    };
+    
+    //Running sums of the Order Parameters in powers of 1, 2, 3, 4.
+    struct LatticeCharacteristics{
+        
+        double sumE[POWERSOP];//components are pow ^ 1/2/3/4
+        double sumPX[POWERSOP];
+        double sumPY[POWERSOP];
+        double sumQ[POWERSOP];
+        
+        //Sum over the Characteristics of the Order Parameters.
+        double sumOP[NUMVECTORS][TYPESOP][POWERSOP];
+        
+        //Sum over the correlation function of the the different OP's
+        double sumOPCorrFunc[NUMVECTORS][TYPESOP][NUMCORRSPINSBIG];
+        double sumECorrFunc[NUMCORRSPINSBIG];
+        double sumPXCorrFunc[NUMCORRSPINSBIG];
+        double sumPYCorrFunc[NUMCORRSPINSBIG];
+        double sumQCorrFunc[NUMCORRSPINSBIG];
+        
+    };
+    
+    //Snapshot of the current order parameters
+    //All Order parameters are per site
+    struct OrderParameters{
+        
+        //Total E, E not per site
+        double E;
+        
+        //dot product of spin in the x direction
+        double PX;
+        
+        //dot product of spin in the y direction
+        double PY;
+        
+        //Nematic order parameter. <PX-PY>
+        double Q;
+        
+        //Characteristics of the Order Parameters. These are vector order parameters.
+        double charOP[NUMVECTORS][TYPESOP];
+        
+        //correlation functions of each of the order parameters
+        double corrFunc[NUMVECTORS][TYPESOP][NUMCORRSPINSBIG];
+        double ECorrFunc[NUMCORRSPINSBIG];
+        double PXCorrFunc[NUMCORRSPINSBIG];
+        double PYCorrFunc[NUMCORRSPINSBIG];
+        double QCorrFunc[NUMCORRSPINSBIG];
+        
+    };
+    
     
     /**************************************************************************/
     //All information about the simulation
@@ -288,7 +294,7 @@ public:
     /**
      Constructing the string that suscintly describes the data that was being
      saved by the program. Used in initialization of the program.
-    */
+     */
     void setParamNames();
     
     /**
@@ -425,6 +431,30 @@ public:
      */
     void initializeLattice();
     
+    //sublattice structure is:
+    //2,3
+    //0,1
+    
+    /**
+     the lattice-geometry path from a current spin to the next spin to the x.
+     
+     @param a the spin to find the nearest neighbor from.
+     @return the spin in the direction of the nearest neighbor.
+     */
+    const ClassicalSpin3D& getSpinInTheXDir(const ClassicalSpin3D& a) const;
+    
+    const ClassicalSpin3D& getSpinInTheYDir(const ClassicalSpin3D& a) const;
+    
+    const ClassicalSpin3D& getSpinInTheMinusXDir(const ClassicalSpin3D& a) const;
+    
+    const ClassicalSpin3D& getSpinInTheMinusYDir(const ClassicalSpin3D& a) const;
+    
+    const ClassicalSpin3D& getSpinInTheUpDir(const ClassicalSpin3D& a) const;
+    
+    const ClassicalSpin3D& getSpinInTheDownDir(const ClassicalSpin3D& a) const;
+    
+    void setNearestNeighbors();
+    
     /**
      Create and initialize all variables used in the simulation.
      */
@@ -519,21 +549,6 @@ public:
     //Core Functions
     /**************************************************************************/
     
-    //sublattice structure is:
-    //2,3
-    //0,1
-    
-    const ClassicalSpin3D& getSpinInTheXDir(const ClassicalSpin3D& a) const;
-    
-    const ClassicalSpin3D& getSpinInTheYDir(const ClassicalSpin3D& a) const;
-    
-    const ClassicalSpin3D& getSpinInTheMinusXDir(const ClassicalSpin3D& a) const;
-    
-    const ClassicalSpin3D& getSpinInTheMinusYDir(const ClassicalSpin3D& a) const;
-    
-    const ClassicalSpin3D& getSpinInTheUpDir(const ClassicalSpin3D& a) const;
-    
-    const ClassicalSpin3D& getSpinInTheDownDir(const ClassicalSpin3D& a) const;
     
     /**
      This returns the energy of the argument's atom interacting with all of
@@ -580,6 +595,43 @@ public:
     
     //The array that holds all the spins in the simulation
     std::vector< std::vector< std::vector< std::vector<ClassicalSpin3D> > > > lattice;
+    
+    //Nearest Neighbor arrays
+    //The array that holds the pointer to the first nearesst neighbor to the x.
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN_x;
+    
+    //The array that holds the pointer to the first nearesst neighbor to the -x.
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN_mx;
+    
+    //The array that holds the pointer to the first nearesst neighbor to the y.
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN_y;
+    
+    //The array that holds the pointer to the first nearesst neighbor to the -y.
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN_my;
+    
+    //The array that holds the pointer to the second nearesst neighbor along the x then y bonds.
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN2_xy;
+    
+    //The array that holds the pointer to the second nearesst neighbor along the -x then y bonds.
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN2_mxy;
+    
+    //The array that holds the pointer to the second nearesst neighbor along the -x then -y bonds.
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN2_mxmy;
+    
+    //The array that holds the pointer to the second nearesst neighbor along the x then -y bonds.
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN2_xmy;
+    
+    //The array that holds the pointer to the thrid nearesst neighbor along the x then x bonds.
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN3_xx;
+    
+    //The array that holds the pointer to the thrid nearesst neighbor along the -x then -x bonds.
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN3_mxmx;
+    
+    //The array that holds the pointer to the thrid nearesst neighbor along the y then y bonds.
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN3_yy;
+    
+    //The array that holds the pointer to the thrid nearesst neighbor along the -y then -y bonds.
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN3_mymy;
     
     //The array that holds the current fourier transform of the lattice.
     std::vector< std::vector< std::vector< std::vector<FourierTransformOfSpin> > > > recipLattice;

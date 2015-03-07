@@ -17,11 +17,13 @@
 class ClassicalSpin3D{
 public:
     
+    const double PI = 3.14159265358979323846;
+    
     /**
      This creates a spin object with its spin components = 0.
      */
     ClassicalSpin3D();
-
+    
     /**
      This creates a spin object with its direction in the x_, y_, and z_
      direction.

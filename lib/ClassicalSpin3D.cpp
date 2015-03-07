@@ -34,7 +34,7 @@ void ClassicalSpin3D::print() const{
     std::cout << "x: " << x << " y: " << y << " z: " << z << std::endl;
 }
 
-void ClassicalSpin3D::checkSpin(){   
+void ClassicalSpin3D::checkSpin(){
     double size = sqrt(x*x + y*y + z*z);
     x = x / size;
     y = y / size;
@@ -49,7 +49,7 @@ void ClassicalSpin3D::checkSpin(){
         std::cerr << "Error: Bad Spin values: " << "x: " << x << std::endl;
         std::cerr << "Error: Bad Spin values: " << "y: " << y << std::endl;
         std::cerr << "Error: Bad Spin values: " << "z: " << z << std::endl;
-        std::cerr << "Error: Bad Spin values: " << "Magnitude: " << 
+        std::cerr << "Error: Bad Spin values: " << "Magnitude: " <<
         std::setprecision(15) << std::setw(15) <<
         sqrt(x * x + y * y + z * z) << std::endl;
         exit(1);
@@ -87,7 +87,7 @@ void ClassicalSpin3D::specifyRotation(double rotPhi, double rotTheta){
     }else if (theta >= 2 * PI){
         theta = theta - 2 * PI;
     }
-
+    
     if(phi > 2 * PI){
         phi = phi - 2 * PI;
     }
@@ -98,7 +98,7 @@ void ClassicalSpin3D::specifyRotation(double rotPhi, double rotTheta){
     x = sin(theta) * cos(phi);
     y = sin(theta) * sin(phi);
     z = cos(theta);
-
+    
     checkSpin();
     
 }
@@ -122,22 +122,22 @@ void ClassicalSpin3D::clear(){
  *spherical coordinates or only cartesian coordinates.
  */
 void ClassicalSpin3D::rotate(double theta_, double phi_, double Beta) {
-	double M[3][3];
-	double q0, q1, q2, q3;
+    double M[3][3];
+    double q0, q1, q2, q3;
     double newS[3] = {0};
-	q0 = cos(Beta / 2.0);
-	q1 = sin(Beta / 2.0) * sin(theta_) * cos(phi_);
-	q2 = sin(Beta / 2.0) * sin(theta_) * sin(phi_);
-	q3 = sin(Beta / 2.0) * cos(theta_);
-	M[0][0] = q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3;
-	M[0][1] = 2.0 * (q1 * q2 - q0 * q3);
-	M[0][2] = 2.0 * (q1 * q3 + q0 * q2);
-	M[1][0] = 2.0 * (q2 * q1 + q0 * q3);
-	M[1][1] = q0 * q0 - q1 * q1 + q2 * q2 - q3 * q3;
-	M[1][2] = 2.0 * (q2 * q3 - q0 * q1);
-	M[2][0] = 2.0 * (q3 * q1 - q0 * q2);
-	M[2][1] = 2.0 * (q3 * q2 + q0 * q1);
-	M[2][2] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
+    q0 = cos(Beta / 2.0);
+    q1 = sin(Beta / 2.0) * sin(theta_) * cos(phi_);
+    q2 = sin(Beta / 2.0) * sin(theta_) * sin(phi_);
+    q3 = sin(Beta / 2.0) * cos(theta_);
+    M[0][0] = q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3;
+    M[0][1] = 2.0 * (q1 * q2 - q0 * q3);
+    M[0][2] = 2.0 * (q1 * q3 + q0 * q2);
+    M[1][0] = 2.0 * (q2 * q1 + q0 * q3);
+    M[1][1] = q0 * q0 - q1 * q1 + q2 * q2 - q3 * q3;
+    M[1][2] = 2.0 * (q2 * q3 - q0 * q1);
+    M[2][0] = 2.0 * (q3 * q1 - q0 * q2);
+    M[2][1] = 2.0 * (q3 * q2 + q0 * q1);
+    M[2][2] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
     
     /*
      for(int i = 0; i < 3; i ++){
@@ -186,7 +186,7 @@ void ClassicalSpin3D::rotate(double theta_, double phi_, double Beta) {
  *same plane, anywhere in 2*PI radians. Lastly, the origial vector is rotated
  *around the perp spin by the angle "range"
  */
- void ClassicalSpin3D::flip(double range){
+void ClassicalSpin3D::flip(double range){
     
     xOld = x;
     yOld = y;
@@ -245,13 +245,16 @@ void ClassicalSpin3D::rotate(double theta_, double phi_, double Beta) {
     double circDist = drand48() * (1 - distFromOrig) + distFromOrig;
     double circleRadius = sqrt(1 - circDist*circDist);
     
+    double cosr = cos(r);
+    double sinr = sin(r);
+    
     x = x * circDist;
     y = y * circDist;
     z = z * circDist;
     
-    x = x + circleRadius * (cos(r) * u[0] + sin(r) * v[0]);
-    y = y + circleRadius * (cos(r) * u[1] + sin(r) * v[1]);
-    z = z + circleRadius * (cos(r) * u[2] + sin(r) * v[2]);
+    x = x + circleRadius * (cosr * u[0] + sinr * v[0]);
+    y = y + circleRadius * (cosr * u[1] + sinr * v[1]);
+    z = z + circleRadius * (cosr * u[2] + sinr * v[2]);
     
     /*
      //Should not be needed.
@@ -466,5 +469,5 @@ void ClassicalSpin3D::rotate(double theta_, double phi_, double Beta) {
  --
  Dave Eberly
  http://www.geometrictools.com
-
+ 
  */
