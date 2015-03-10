@@ -13,7 +13,7 @@ PROGSRC3=lib/simulation.cpp
 PROGRAM4=bin/submitSpecificJobs
 PROGSRC4=submitSpecificJobs.cpp
 
-CXXFLAGS+=-g -O3 -w
+CXXFLAGS+=-g -O3 -std=c++11
 
 
 

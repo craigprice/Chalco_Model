@@ -15,7 +15,9 @@
 #include <fstream>
 #include <cmath>
 #include <ctime>
+#include "ClassicalSpin3D.h"
 #include "MonteCarlo.h"
+#include "ClassicalSpin3D.cpp"
 #include "MonteCarlo.cpp"
 
 int main(int argc, char*argv[]){
@@ -45,17 +47,9 @@ int main(int argc, char*argv[]){
         input_parameters.bField_z    =           atof(argv[12]);
         input_parameters.bFieldMag   =           atof(argv[13]);
         
-        
         input_parameters.cellsA      =           atoi(argv[14]);
         input_parameters.cellsB      =           atoi(argv[15]);
         input_parameters.cellsC      =           atoi(argv[16]);
-        
-        if((input_parameters.cellsA > 255)||
-           (input_parameters.cellsB > 255)||
-           (input_parameters.cellsC > 255)){
-            std::cout << "Lattice Index > 255. Make larger sublattice." << std::endl;
-            exit(1);
-        }
         
         input_parameters.KbT         =           atof(argv[17]);
         
@@ -71,7 +65,6 @@ int main(int argc, char*argv[]){
             input_parameters.monte_carlo_seed = atoi(argv[21]);
         }
         
-        input_parameters.monte_carlo_seed = 10;
         srand48( input_parameters.monte_carlo_seed );
         
         MC = new MonteCarlo(input_parameters);
@@ -90,14 +83,7 @@ int main(int argc, char*argv[]){
     int numSweepsBetwnConfigs = 6;
     bool outOfTime = false;
     //MC -> outputMag = "out.txt";
-    clock_t c0, c1;
-    c0 = clock();
-    for (int i = 0; i < 500; i++){
-        MC -> metropolisSweep();
-    }
-    c1 = clock();
-    std::cout<<"Clocks: " << (c1-c0)/(1000*1000.0) << std::endl;
-    exit(0);
+    //MC -> metropolisSweep();
     //MC -> updateFourierTransformOnRecipLattice();
     
     //

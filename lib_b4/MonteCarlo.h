@@ -6,7 +6,7 @@
  magnetic phases at finite temperature.
  
  @author Craig Price
- @version 2.0 2015/03/07
+ @version 1.0 2015/03/04
  */
 
 #ifndef MONTECARLO_H
@@ -17,13 +17,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "ClassicalSpin3D.h"
+class ClassicalSpin3D;
 
-struct SpinCoordinates{
-    uint_fast8_t x; //position of the spin along the "a" axis
-    uint_fast8_t y; //position of the spin along the "b" axis
-    uint_fast8_t z; //position of the spin along the "c" axis
-    uint_fast8_t s; //sublatice that the spin belongs within
-};
+
 
 //The object that contains all the information about the simulation and contains
 //the spin objects.
@@ -278,14 +275,6 @@ public:
     };
     
     
-    
-    struct ClassicalSpin3D{
-        SpinCoordinates sc;
-        double x; //x component of the 3D unit vector that is the spin
-        double y; //y component of the 3D unit vector that is the spin
-        double z; //z component of the 3D unit vector that is the spin
-    };
-    
     /**************************************************************************/
     //All information about the simulation
     /**************************************************************************/
@@ -294,10 +283,9 @@ public:
     MetropolisDetails MD;
     OrderParameters OP;
     LatticeCharacteristics LC;
-    int numSites;
     
     //The path to the output file.
-    std::string outputFileName;
+    std::string outputMag;
     
     /**************************************************************************/
     //Helper functions
@@ -358,6 +346,15 @@ public:
      @param theta angle to the "z" direction of the spin/lattice
      */
     void rotateAllSpins(double phi, double theta);
+    
+    /**
+     Returns the dot product between two 3D arrays
+     
+     @param arr1 a 3-component array that will be treated as a 3-vector
+     @param arr2 another 3-component array to be treated as a 3-vector
+     @return the dot product of the given arguments.
+     */
+    double dotProd(const double arr1[], const double arr2[]);
     
     /**
      If the argument string str contains str2, then it returns the int cast
@@ -444,17 +441,17 @@ public:
      @param a the spin to find the nearest neighbor from.
      @return the spin in the direction of the nearest neighbor.
      */
-    SpinCoordinates getSpinCoordsInTheXDir(SpinCoordinates sc) const;
+    const ClassicalSpin3D& getSpinInTheXDir(const ClassicalSpin3D& a) const;
     
-    SpinCoordinates getSpinCoordsInTheYDir(SpinCoordinates sc) const;
+    const ClassicalSpin3D& getSpinInTheYDir(const ClassicalSpin3D& a) const;
     
-    SpinCoordinates getSpinCoordsInTheMinusXDir(SpinCoordinates sc) const;
+    const ClassicalSpin3D& getSpinInTheMinusXDir(const ClassicalSpin3D& a) const;
     
-    SpinCoordinates getSpinCoordsInTheMinusYDir(SpinCoordinates sc) const;
+    const ClassicalSpin3D& getSpinInTheMinusYDir(const ClassicalSpin3D& a) const;
     
-    SpinCoordinates getSpinCoordsInTheUpDir(SpinCoordinates sc) const;
+    const ClassicalSpin3D& getSpinInTheUpDir(const ClassicalSpin3D& a) const;
     
-    SpinCoordinates getSpinCoordsInTheDownDir(SpinCoordinates sc) const;
+    const ClassicalSpin3D& getSpinInTheDownDir(const ClassicalSpin3D& a) const;
     
     void setNearestNeighbors();
     
@@ -550,85 +547,6 @@ public:
     
     
     /**************************************************************************/
-    //Spin Functions
-    /**************************************************************************/
-    
-    /**
-     This sets a spin object with its spin components = 0.
-     
-     @param spin
-     */
-    void setSpinToZero(SpinCoordinates sc);
-    
-    /**
-     This set the spin object with its direction in the x_, y_, and z_
-     direction.
-     
-     @param spin the spin
-     @param x_ the x component of the spin.
-     @param y_ the y component of the spin.
-     @param z_ the z component of the spin.
-     */
-    void setSpin(SpinCoordinates sc, double x_, double y_, double z_);
-    
-    /**
-     This makes sure that the value stored in the x and y and z values are
-     appropriate for a 3D classical spin with magnitude of 1.
-     */
-    void checkSpin(SpinCoordinates sc);
-    
-    /**
-     Sets this spin to be oriented randomly in the unit spherical surface.
-     */
-    void setRandomOrientation(SpinCoordinates sc);
-    
-    /**
-     Rotate the spin.
-     
-     @param phi
-     @param theta
-     */
-    void specifyRotation(SpinCoordinates sc, double rotPhi, double rotTheta);
-    
-    /**
-     Returns this spin to the value that it had previously.
-     */
-    void reset(SpinCoordinates sc);
-    
-    /**
-     Sets this spin's information to 0;
-     */
-    void clear(SpinCoordinates sc);
-    
-    /**
-     flips this spin from it's current orientation to a random new orientation
-     Where the value of the angular rotation is at most range.
-     
-     @param range the polar angle theta that defines the polar spherical cap
-     within which lies the possible orientations for the spin to point in.
-     */
-    void flip(SpinCoordinates sc, double range);
-    
-    /**
-     This function rotates the spin about an axis (specified by 'theta' and
-     'phi') by an angle of 'angle'.
-     
-     @param theta
-     @param phi
-     @param angle
-     */
-    void rotate(SpinCoordinates sc, double theta_, double phi_, double Beta);
-    
-    
-    /**
-     Takes the dot product between this spin and the one passed to it.
-     
-     @param spin the other vector to take the dot product with.
-     @return the value of the dot product.
-     */
-    double dotProd(SpinCoordinates sc1, SpinCoordinates sc2) const;
-    
-    /**************************************************************************/
     //Core Functions
     /**************************************************************************/
     
@@ -644,8 +562,8 @@ public:
      counting.
      @return energy from all interactions with the spin a
      */
-    double getLocalEnergyFromCalc(SpinCoordinates sc, bool fromSpinFlip) const;
-    double getLocalEnergy(SpinCoordinates sc, bool fromSpinFlip) const;
+    double getLocalEnergy(const ClassicalSpin3D& a, bool fromSpinFlip) const;
+    double getLocalEnergy0(const ClassicalSpin3D& a, bool fromSpinFlip) const;
     
     /**
      Performs the spin flipping over the each lattice site once.
@@ -682,40 +600,40 @@ public:
     
     //Nearest Neighbor arrays
     //The array that holds the pointer to the first nearesst neighbor to the x.
-    std::vector< std::vector< std::vector< std::vector<SpinCoordinates> > > > NN_x;
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN_x;
     
     //The array that holds the pointer to the first nearesst neighbor to the -x.
-    std::vector< std::vector< std::vector< std::vector<SpinCoordinates> > > > NN_mx;
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN_mx;
     
     //The array that holds the pointer to the first nearesst neighbor to the y.
-    std::vector< std::vector< std::vector< std::vector<SpinCoordinates> > > > NN_y;
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN_y;
     
     //The array that holds the pointer to the first nearesst neighbor to the -y.
-    std::vector< std::vector< std::vector< std::vector<SpinCoordinates> > > > NN_my;
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN_my;
     
     //The array that holds the pointer to the second nearesst neighbor along the x then y bonds.
-    std::vector< std::vector< std::vector< std::vector<SpinCoordinates> > > > NN2_xy;
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN2_xy;
     
     //The array that holds the pointer to the second nearesst neighbor along the -x then y bonds.
-    std::vector< std::vector< std::vector< std::vector<SpinCoordinates> > > > NN2_mxy;
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN2_mxy;
     
     //The array that holds the pointer to the second nearesst neighbor along the -x then -y bonds.
-    std::vector< std::vector< std::vector< std::vector<SpinCoordinates> > > > NN2_mxmy;
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN2_mxmy;
     
     //The array that holds the pointer to the second nearesst neighbor along the x then -y bonds.
-    std::vector< std::vector< std::vector< std::vector<SpinCoordinates> > > > NN2_xmy;
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN2_xmy;
     
     //The array that holds the pointer to the thrid nearesst neighbor along the x then x bonds.
-    std::vector< std::vector< std::vector< std::vector<SpinCoordinates> > > > NN3_xx;
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN3_xx;
     
     //The array that holds the pointer to the thrid nearesst neighbor along the -x then -x bonds.
-    std::vector< std::vector< std::vector< std::vector<SpinCoordinates> > > > NN3_mxmx;
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN3_mxmx;
     
     //The array that holds the pointer to the thrid nearesst neighbor along the y then y bonds.
-    std::vector< std::vector< std::vector< std::vector<SpinCoordinates> > > > NN3_yy;
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN3_yy;
     
     //The array that holds the pointer to the thrid nearesst neighbor along the -y then -y bonds.
-    std::vector< std::vector< std::vector< std::vector<SpinCoordinates> > > > NN3_mymy;
+    std::vector< std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > > NN3_mymy;
     
     //The array that holds the current fourier transform of the lattice.
     std::vector< std::vector< std::vector< std::vector<FourierTransformOfSpin> > > > recipLattice;
@@ -745,12 +663,6 @@ inline int MonteCarlo::findParameterInt(int currentValue, std::string l, std::st
     }else{
         return currentValue;
     }
-}
-
-inline double MonteCarlo::dotProd(SpinCoordinates s1, SpinCoordinates s2) const{
-    return (lattice[s1.x][s1.y][s1.s][s1.z].x * lattice[s2.x][s2.y][s2.s][s2.z].x +
-            lattice[s1.x][s1.y][s1.s][s1.z].y * lattice[s2.x][s2.y][s2.s][s2.z].y +
-            lattice[s1.x][s1.y][s1.s][s1.z].z * lattice[s2.x][s2.y][s2.s][s2.z].z);
 }
 
 

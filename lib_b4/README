@@ -1,0 +1,17 @@
+This library is a c++ program that applies the Metropolis Monte Carlo
+algorithm to classical spins.
+
+The physical idea behind the algorithm is that the spins of a physical system are set in a particular geometry, with pairwise interactions explicitly encoded. Then, we begin with the system at "high temperature" where all the spins are randomly oriented. This non-equilibrium state is relaxed to a equilibrium state by looping over all the spins in the lattice and flipping the spin to a new direction, querying if the energy of the system has been reduced by that change, and then keeping the new orientation of the spin if the energy has been reduced. If the energy has increased, then we keep that flip with a probability that scales as the Boltzmann factor as a function of energy increased. That probability is altered by specifying a constant, "T", to tune how likely a higher energy state is accepted. In this way, we can equilibrate a spin configuration and reduce the temperature to arrive at a thermodynamic ground state. As the "T" parameter reduces, the demand that only spin flips that reduce the overall energy becomes more dominant, until we are left with a configuration that cannot reduce it's energy any further.
+
+Since the system responds in a quasi-dynamic fashion (only in the sense that it changes equilibrium state as a response to the temperature), this MonteCarlo algorithm can capture thermodynamic physical quantities such as specific heat responses, and susceptibilities.
+
+The spins are represented by 3D unit vectors, and the particular geometry of the lattice in which the spins live is defined through functions in MonteCarlo.cpp such as "getSpinInXDirection" which specifies which spins are neighbors of each other.
+
+There are five files in the library. The program is setup and run
+through the master file, "simulation.cpp" which explicitly takes in the
+input parameters for the simulation via either a command line argument
+that specifies all parameters of the simulation (eg. strength of j2 coupling, number of sites in the a lattice direction, etc) to start a new simulation or via a path to an already existing simulation output file that contains all the information of the simulation to continue running it.
+
+The simulation file creates a "MonteCarlo" object which most significantly contains the lattice of spins that represent our system. The lattice is a four dimensional vector (c++ object of a smarter array) which is populated with "ClassicalSpin" objects.
+
+A typical simulation starting from high temperature is broken into two steps, first, a lattice will need to "thermalize" where many configurations of the system are looped over and the system is drawn into a equilibrium state at a specific T. After this period, then we loop over the system at the T that we are interested in, and every few configurations of the lattice, we save all the characteristics of the lattice, summing over quantities such as "Magnetization" and "Susceptibility" for the order parameters that we are interested in. Many millions of configurations are summed in this fashion to obtain a result with small statistical uncertainty.

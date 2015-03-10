@@ -6,9 +6,10 @@
  magnetic phases at finite temperature.
  
  @author Craig Price
- @version 2.0 2015/03/07
+ @version 1.0 2015/03/04
  */
 
+#include "MonteCarlo.h"
 #include <cstddef>
 #include <cmath>
 #include <ctime>
@@ -22,7 +23,6 @@
 #include <iostream>
 #include <vector>
 #include <limits>
-#include "MonteCarlo.h"
 using namespace std;
 
 
@@ -445,7 +445,7 @@ void MonteCarlo::finalPrint(){
     
     double spHeat = 0;
     
-    
+    double numSites = MCP.cellsA * MCP.cellsB * MCP.cellsC * NUMSUBLATTICES * 1.0;
     for(int i = 0; i < NUMVECTORS; i++){
         for(int j = 0; j < TYPESOP; j++){
             suscep[i][j] = numSites*(aveOP[i][j][1] - aveOP[i][j][0]*aveOP[i][j][0])/MCP.KbT;
@@ -469,10 +469,10 @@ void MonteCarlo::finalPrint(){
     time_t t = time(0);
     tm time = *localtime(&t);
     
-    fileOut.open(outputFileName.c_str(), std::ios::out | std::ios::trunc);
+    fileOut.open(outputMag.c_str(), std::ios::out | std::ios::trunc);
     if (!fileOut.is_open() || !fileOut.good()){
         cerr << "Can't open file: " << endl;
-        cerr << outputFileName <<endl;
+        cerr << outputMag <<endl;
         exit(3161990);
     }
     stream.str("");
@@ -595,7 +595,7 @@ void MonteCarlo::printSnapshot(){
      
      stringstream out;
      out.str("");
-     string temp = outputFileName.substr(0,outputFileName.size()-4);
+     string temp = outputMag.substr(0,outputMag.size()-4);
      out << temp.c_str() << "OPSnap.txt";
      
      fileOut.open(out.str().c_str(), std::ios::out | std::ios::app);
@@ -651,11 +651,17 @@ void MonteCarlo::rotateAllSpins(double phi, double theta){
         for(int j = 0; j < MCP.cellsB; j++){
             for(int z = 0; z < MCP.cellsC; z++){
                 for(int k = 0; k < NUMSUBLATTICES; k++){
-                    specifyRotation(lattice[i][j][k][z].sc, phi, theta);
+                    lattice[i][j][k][z].specifyRotation(phi, theta);
                 }
             }
         }
     }
+}
+
+double MonteCarlo::dotProd(const double arr1[], const double arr2[]){
+    return (arr1[0] * arr2[0] +
+            arr1[1] * arr2[1] +
+            arr1[2] * arr2[2]);
 }
 
 
@@ -803,8 +809,7 @@ void MonteCarlo::setRecipToZero(){
 void MonteCarlo::initializeLattice(){
     //Constructs and initializes the lattice to random spins
     ClassicalSpin3D spin;
-    SpinCoordinates sc;
-    
+    const ClassicalSpin3D* spin_ptr;
     for(int i = 0; i < MCP.cellsA; i++){
         std::vector< std::vector< std::vector<ClassicalSpin3D> > > row;
         for(int j = 0; j < MCP.cellsB; j++){
@@ -823,13 +828,13 @@ void MonteCarlo::initializeLattice(){
     
     //array of pointers to the nearest neighbors of the site in the lattice
     for(int i = 0; i < MCP.cellsA; i++){
-        std::vector< std::vector< std::vector<SpinCoordinates> > > row;
+        std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > row;
         for(int j = 0; j < MCP.cellsB; j++){
-            std::vector< std::vector<SpinCoordinates> > col;
+            std::vector< std::vector<const ClassicalSpin3D*> > col;
             for(int k = 0; k < NUMSUBLATTICES; k++){
-                std::vector<SpinCoordinates> rise;
+                std::vector<const ClassicalSpin3D*> rise;
                 for(int z = 0; z < MCP.cellsC; z++){
-                    rise.push_back(sc);
+                    rise.push_back(spin_ptr);
                 }
                 col.push_back(rise);
             }
@@ -840,13 +845,13 @@ void MonteCarlo::initializeLattice(){
     
     //array of pointers to the nearest neighbors of the site in the lattice
     for(int i = 0; i < MCP.cellsA; i++){
-        std::vector< std::vector< std::vector<SpinCoordinates> > > row;
+        std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > row;
         for(int j = 0; j < MCP.cellsB; j++){
-            std::vector< std::vector<SpinCoordinates> > col;
+            std::vector< std::vector<const ClassicalSpin3D*> > col;
             for(int k = 0; k < NUMSUBLATTICES; k++){
-                std::vector<SpinCoordinates> rise;
+                std::vector<const ClassicalSpin3D*> rise;
                 for(int z = 0; z < MCP.cellsC; z++){
-                    rise.push_back(sc);
+                    rise.push_back(spin_ptr);
                 }
                 col.push_back(rise);
             }
@@ -857,13 +862,13 @@ void MonteCarlo::initializeLattice(){
     
     //array of pointers to the nearest neighbors of the site in the lattice
     for(int i = 0; i < MCP.cellsA; i++){
-        std::vector< std::vector< std::vector<SpinCoordinates> > > row;
+        std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > row;
         for(int j = 0; j < MCP.cellsB; j++){
-            std::vector< std::vector<SpinCoordinates> > col;
+            std::vector< std::vector<const ClassicalSpin3D*> > col;
             for(int k = 0; k < NUMSUBLATTICES; k++){
-                std::vector<SpinCoordinates> rise;
+                std::vector<const ClassicalSpin3D*> rise;
                 for(int z = 0; z < MCP.cellsC; z++){
-                    rise.push_back(sc);
+                    rise.push_back(spin_ptr);
                 }
                 col.push_back(rise);
             }
@@ -874,13 +879,13 @@ void MonteCarlo::initializeLattice(){
     
     //array of pointers to the nearest neighbors of the site in the lattice
     for(int i = 0; i < MCP.cellsA; i++){
-        std::vector< std::vector< std::vector<SpinCoordinates> > > row;
+        std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > row;
         for(int j = 0; j < MCP.cellsB; j++){
-            std::vector< std::vector<SpinCoordinates> > col;
+            std::vector< std::vector<const ClassicalSpin3D*> > col;
             for(int k = 0; k < NUMSUBLATTICES; k++){
-                std::vector<SpinCoordinates> rise;
+                std::vector<const ClassicalSpin3D*> rise;
                 for(int z = 0; z < MCP.cellsC; z++){
-                    rise.push_back(sc);
+                    rise.push_back(spin_ptr);
                 }
                 col.push_back(rise);
             }
@@ -891,13 +896,13 @@ void MonteCarlo::initializeLattice(){
     
     //array of pointers to the nearest neighbors of the site in the lattice
     for(int i = 0; i < MCP.cellsA; i++){
-        std::vector< std::vector< std::vector<SpinCoordinates> > > row;
+        std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > row;
         for(int j = 0; j < MCP.cellsB; j++){
-            std::vector< std::vector<SpinCoordinates> > col;
+            std::vector< std::vector<const ClassicalSpin3D*> > col;
             for(int k = 0; k < NUMSUBLATTICES; k++){
-                std::vector<SpinCoordinates> rise;
+                std::vector<const ClassicalSpin3D*> rise;
                 for(int z = 0; z < MCP.cellsC; z++){
-                    rise.push_back(sc);
+                    rise.push_back(spin_ptr);
                 }
                 col.push_back(rise);
             }
@@ -908,13 +913,13 @@ void MonteCarlo::initializeLattice(){
     
     //array of pointers to the nearest neighbors of the site in the lattice
     for(int i = 0; i < MCP.cellsA; i++){
-        std::vector< std::vector< std::vector<SpinCoordinates> > > row;
+        std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > row;
         for(int j = 0; j < MCP.cellsB; j++){
-            std::vector< std::vector<SpinCoordinates> > col;
+            std::vector< std::vector<const ClassicalSpin3D*> > col;
             for(int k = 0; k < NUMSUBLATTICES; k++){
-                std::vector<SpinCoordinates> rise;
+                std::vector<const ClassicalSpin3D*> rise;
                 for(int z = 0; z < MCP.cellsC; z++){
-                    rise.push_back(sc);
+                    rise.push_back(spin_ptr);
                 }
                 col.push_back(rise);
             }
@@ -925,13 +930,13 @@ void MonteCarlo::initializeLattice(){
     
     //array of pointers to the nearest neighbors of the site in the lattice
     for(int i = 0; i < MCP.cellsA; i++){
-        std::vector< std::vector< std::vector<SpinCoordinates> > > row;
+        std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > row;
         for(int j = 0; j < MCP.cellsB; j++){
-            std::vector< std::vector<SpinCoordinates> > col;
+            std::vector< std::vector<const ClassicalSpin3D*> > col;
             for(int k = 0; k < NUMSUBLATTICES; k++){
-                std::vector<SpinCoordinates> rise;
+                std::vector<const ClassicalSpin3D*> rise;
                 for(int z = 0; z < MCP.cellsC; z++){
-                    rise.push_back(sc);
+                    rise.push_back(spin_ptr);
                 }
                 col.push_back(rise);
             }
@@ -942,13 +947,13 @@ void MonteCarlo::initializeLattice(){
     
     //array of pointers to the nearest neighbors of the site in the lattice
     for(int i = 0; i < MCP.cellsA; i++){
-        std::vector< std::vector< std::vector<SpinCoordinates> > > row;
+        std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > row;
         for(int j = 0; j < MCP.cellsB; j++){
-            std::vector< std::vector<SpinCoordinates> > col;
+            std::vector< std::vector<const ClassicalSpin3D*> > col;
             for(int k = 0; k < NUMSUBLATTICES; k++){
-                std::vector<SpinCoordinates> rise;
+                std::vector<const ClassicalSpin3D*> rise;
                 for(int z = 0; z < MCP.cellsC; z++){
-                    rise.push_back(sc);
+                    rise.push_back(spin_ptr);
                 }
                 col.push_back(rise);
             }
@@ -959,13 +964,13 @@ void MonteCarlo::initializeLattice(){
     
     //array of pointers to the nearest neighbors of the site in the lattice
     for(int i = 0; i < MCP.cellsA; i++){
-        std::vector< std::vector< std::vector<SpinCoordinates> > > row;
+        std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > row;
         for(int j = 0; j < MCP.cellsB; j++){
-            std::vector< std::vector<SpinCoordinates> > col;
+            std::vector< std::vector<const ClassicalSpin3D*> > col;
             for(int k = 0; k < NUMSUBLATTICES; k++){
-                std::vector<SpinCoordinates> rise;
+                std::vector<const ClassicalSpin3D*> rise;
                 for(int z = 0; z < MCP.cellsC; z++){
-                    rise.push_back(sc);
+                    rise.push_back(spin_ptr);
                 }
                 col.push_back(rise);
             }
@@ -976,13 +981,13 @@ void MonteCarlo::initializeLattice(){
     
     //array of pointers to the nearest neighbors of the site in the lattice
     for(int i = 0; i < MCP.cellsA; i++){
-        std::vector< std::vector< std::vector<SpinCoordinates> > > row;
+        std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > row;
         for(int j = 0; j < MCP.cellsB; j++){
-            std::vector< std::vector<SpinCoordinates> > col;
+            std::vector< std::vector<const ClassicalSpin3D*> > col;
             for(int k = 0; k < NUMSUBLATTICES; k++){
-                std::vector<SpinCoordinates> rise;
+                std::vector<const ClassicalSpin3D*> rise;
                 for(int z = 0; z < MCP.cellsC; z++){
-                    rise.push_back(sc);
+                    rise.push_back(spin_ptr);
                 }
                 col.push_back(rise);
             }
@@ -993,13 +998,13 @@ void MonteCarlo::initializeLattice(){
     
     //array of pointers to the nearest neighbors of the site in the lattice
     for(int i = 0; i < MCP.cellsA; i++){
-        std::vector< std::vector< std::vector<SpinCoordinates> > > row;
+        std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > row;
         for(int j = 0; j < MCP.cellsB; j++){
-            std::vector< std::vector<SpinCoordinates> > col;
+            std::vector< std::vector<const ClassicalSpin3D*> > col;
             for(int k = 0; k < NUMSUBLATTICES; k++){
-                std::vector<SpinCoordinates> rise;
+                std::vector<const ClassicalSpin3D*> rise;
                 for(int z = 0; z < MCP.cellsC; z++){
-                    rise.push_back(sc);
+                    rise.push_back(spin_ptr);
                 }
                 col.push_back(rise);
             }
@@ -1010,13 +1015,13 @@ void MonteCarlo::initializeLattice(){
     
     //array of pointers to the nearest neighbors of the site in the lattice
     for(int i = 0; i < MCP.cellsA; i++){
-        std::vector< std::vector< std::vector<SpinCoordinates> > > row;
+        std::vector< std::vector< std::vector<const ClassicalSpin3D*> > > row;
         for(int j = 0; j < MCP.cellsB; j++){
-            std::vector< std::vector<SpinCoordinates> > col;
+            std::vector< std::vector<const ClassicalSpin3D*> > col;
             for(int k = 0; k < NUMSUBLATTICES; k++){
-                std::vector<SpinCoordinates> rise;
+                std::vector<const ClassicalSpin3D*> rise;
                 for(int z = 0; z < MCP.cellsC; z++){
-                    rise.push_back(sc);
+                    rise.push_back(spin_ptr);
                 }
                 col.push_back(rise);
             }
@@ -1066,10 +1071,10 @@ void MonteCarlo::initializeLattice(){
                     lattice[i][j][k][z].y = 0;
                     lattice[i][j][k][z].z = 1;
                     //lattice[i][j][k][z].setRandomOrientation();
-                    lattice[i][j][k][z].sc.x = i;
-                    lattice[i][j][k][z].sc.y = j;
-                    lattice[i][j][k][z].sc.s = k;
-                    lattice[i][j][k][z].sc.z = z;
+                    lattice[i][j][k][z].xPos = i;
+                    lattice[i][j][k][z].yPos = j;
+                    lattice[i][j][k][z].sPos = k;
+                    lattice[i][j][k][z].zPos = z;
                     
                     recipLattice[i][j][k][z].ReXComponent = 0;
                     recipLattice[i][j][k][z].ReYComponent = 0;
@@ -1091,346 +1096,219 @@ void MonteCarlo::initializeLattice(){
         }
     }
     
-    numSites = MCP.cellsA * MCP.cellsB * MCP.cellsC * NUMSUBLATTICES;
     setNearestNeighbors();
 }
 
-SpinCoordinates MonteCarlo::getSpinCoordsInTheXDir(SpinCoordinates sc) const{
-    uint_fast8_t ns;//next spin's sublattice
+const ClassicalSpin3D& MonteCarlo::getSpinInTheXDir(const ClassicalSpin3D& a) const{
+    int aX = a.xPos;
+    int aS = a.sPos;
+    int aY = a.yPos;
+    int aZ = a.zPos;
+    int ns = 0;//next spin's sublattice
     
-    switch (sc.s) {
-        case 0:
-            ns = 1;
-            return lattice[sc.x][sc.y][ns][sc.z].sc;
-            break;
-            
-        case 2:
-            ns = 3;
-            return lattice[sc.x][sc.y][ns][sc.z].sc;
-            break;
-            
-        case 1:
-            ns = 0;
-            if(sc.x ==  MCP.cellsA - 1){
-                return lattice[0][sc.y][ns][sc.z].sc;
-            }else{
-                return lattice[sc.x + 1][sc.y][ns][sc.z].sc;
-            }
-            break;
-            
-        case 3:
-            ns = 2;
-            if(sc.x ==  MCP.cellsA - 1){
-                return lattice[0][sc.y][ns][sc.z].sc;
-            }else{
-                return lattice[sc.x + 1][sc.y][ns][sc.z].sc;
-            }
-            break;
-            
-        default:
-            exit(1);
-            break;
+    if(aS == 0){
+        ns = 1;
+        return lattice[aX][aY][ns][aZ];
+    }else if(aS == 2){
+        ns = 3;
+        return lattice[aX][aY][ns][aZ];
+    }else if(aS == 1){
+        ns = 0;
+        if(aX == MCP.cellsA - 1){
+            return lattice[0][aY][ns][aZ];
+        }else{
+            return lattice[aX + 1][aY][ns][aZ];
+        }
+    }else if(aS == 3){
+        ns = 2;
+        if(aX == MCP.cellsA - 1){
+            return lattice[0][aY][ns][aZ];
+        }else{
+            return lattice[aX + 1][aY][ns][aZ];
+        }
+    }else{
+        std::cerr << "Wrong sublattice" << std::endl;
+        exit(1);
+        return a;
     }
-    
-    /*
-     if(sc.s == 0){
-     ns = 1;
-     return lattice[sc.x][sc.y][ns][sc.z].sc;
-     }else if(sc.s == 2){
-     ns = 3;
-     return lattice[sc.x][sc.y][ns][sc.z].sc;
-     }else if(sc.s == 1){
-     ns = 0;
-     if(sc.x == MCP.cellsA - 1){
-     return lattice[0][sc.y][ns][sc.z].sc;
-     }else{
-     return lattice[sc.x + 1][sc.y][ns][sc.z].sc;
-     }
-     }else if(sc.s == 3){
-     ns = 2;
-     if(sc.x == MCP.cellsA - 1){
-     return lattice[0][sc.y][ns][sc.z].sc;
-     }else{
-     return lattice[sc.x + 1][sc.y][ns][sc.z].sc;
-     }
-     }else{
-     std::cerr << "Wrong sublattice" << std::endl;
-     exit(1);
-     return sc;
-     }
-     */
-    
-    
 }
 
-SpinCoordinates MonteCarlo::getSpinCoordsInTheMinusXDir(SpinCoordinates sc) const{
-    uint_fast8_t ns;//next spin's sublattice
+const ClassicalSpin3D& MonteCarlo::getSpinInTheMinusXDir(const ClassicalSpin3D& a) const{
+    int aX = a.xPos;
+    int aS = a.sPos;
+    int aY = a.yPos;
+    int aZ = a.zPos;
+    int ns = 0;//next spin's sublattice
     
-    switch (sc.s) {
-        case 1:
-            ns = 0;
-            return lattice[sc.x][sc.y][ns][sc.z].sc;
-            break;
-            
-        case 3:
-            ns = 2;
-            return lattice[sc.x][sc.y][ns][sc.z].sc;
-            break;
-            
-        case 0:
-            ns = 1;
-            if(sc.x == 0){
-                return lattice[MCP.cellsA - 1][sc.y][ns][sc.z].sc;
-            }else{
-                return lattice[sc.x - 1][sc.y][ns][sc.z].sc;
-            }
-            break;
-            
-        case 2:
-            ns = 3;
-            if(sc.x == 0){
-                return lattice[MCP.cellsA - 1][sc.y][ns][sc.z].sc;
-            }else{
-                return lattice[sc.x - 1][sc.y][ns][sc.z].sc;
-            }
-            break;
-            
-        default:
-            exit(1);
-            break;
+    if(aS == 1){
+        ns = 0;
+        return lattice[aX][aY][ns][aZ];
+    }else if(aS == 3){
+        ns = 2;
+        return lattice[aX][aY][ns][aZ];
+    }else if(aS == 0){
+        ns = 1;
+        if(aX == 0){
+            return lattice[MCP.cellsA - 1][aY][ns][aZ];
+        }else{
+            return lattice[aX - 1][aY][ns][aZ];
+        }
+    }else if(aS == 2){
+        ns = 3;
+        if(aX == 0){
+            return lattice[MCP.cellsA - 1][aY][ns][aZ];
+        }else{
+            return lattice[aX - 1][aY][ns][aZ];
+        }
+    }else{
+        std::cerr << "Wrong sublattice" << std::endl;
+        exit(1);
+        return a;
     }
-    
-    /*
-     if(sc.s == 1){
-     ns = 0;
-     return lattice[sc.x][sc.y][ns][sc.z].sc;
-     }else if(sc.s == 3){
-     ns = 2;
-     return lattice[sc.x][sc.y][ns][sc.z].sc;
-     }else if(sc.s == 0){
-     ns = 1;
-     if(sc.x == 0){
-     return lattice[MCP.cellsA - 1][sc.y][ns][sc.z].sc;
-     }else{
-     return lattice[sc.x - 1][sc.y][ns][sc.z].sc;
-     }
-     }else if(sc.s == 2){
-     ns = 3;
-     if(sc.x == 0){
-     return lattice[MCP.cellsA - 1][sc.y][ns][sc.z].sc;
-     }else{
-     return lattice[sc.x - 1][sc.y][ns][sc.z].sc;
-     }
-     }else{
-     std::cerr << "Wrong sublattice" << std::endl;
-     exit(1);
-     return sc;
-     }
-     */
-    
 }
 
 
 
-SpinCoordinates MonteCarlo::getSpinCoordsInTheMinusYDir(SpinCoordinates sc) const{
-    uint_fast8_t ns;//next spin's sublattice
+const ClassicalSpin3D& MonteCarlo::getSpinInTheMinusYDir(const ClassicalSpin3D& a) const{
+    int aY = a.yPos;
+    int aS = a.sPos;
+    int aX = a.xPos;
+    int aZ = a.zPos;
+    int ns = 0;//next spin's sublattice
     
-    switch (sc.s) {
-        case 2:
-            ns = 0;
-            return lattice[sc.x][sc.y][ns][sc.z].sc;
-            break;
-            
-        case 3:
-            ns = 1;
-            return lattice[sc.x][sc.y][ns][sc.z].sc;
-            break;
-            
-        case 0:
-            ns = 2;
-            if(sc.y == 0){
-                return lattice[sc.x][MCP.cellsB - 1][ns][sc.z].sc;
-            }else{
-                return lattice[sc.x][sc.y - 1][ns][sc.z].sc;
-            }
-            break;
-            
-        case 1:
-            ns = 3;
-            if(sc.y == 0){
-                return lattice[sc.x][MCP.cellsB - 1][ns][sc.z].sc;
-            }else{
-                return lattice[sc.x][sc.y - 1][ns][sc.z].sc;
-            }
-            break;
-            
-        default:
-            exit(1);
-            break;
+    if(aS == 2){
+        ns = 0;
+        return lattice[aX][aY][ns][aZ];
+    }else if(aS == 3){
+        ns = 1;
+        return lattice[aX][aY][ns][aZ];
+    }else if(aS == 0){
+        ns = 2;
+        if(aY == 0){
+            return lattice[aX][MCP.cellsB - 1][ns][aZ];
+        }else{
+            return lattice[aX][aY - 1][ns][aZ];
+        }
+    }else if(aS == 1){
+        ns = 3;
+        if(aY == 0){
+            return lattice[aX][MCP.cellsB - 1][ns][aZ];
+        }else{
+            return lattice[aX][aY - 1][ns][aZ];
+        }
+    }else{
+        std::cerr << "Wrong sublattice" << std::endl;
+        exit(1);
+        return a;
     }
-    
-    /*
-     if(sc.s == 2){
-     ns = 0;
-     return lattice[sc.x][sc.y][ns][sc.z].sc;
-     }else if(sc.s == 3){
-     ns = 1;
-     return lattice[sc.x][sc.y][ns][sc.z].sc;
-     }else if(sc.s == 0){
-     ns = 2;
-     if(sc.y == 0){
-     return lattice[sc.x][MCP.cellsB - 1][ns][sc.z].sc;
-     }else{
-     return lattice[sc.x][sc.y - 1][ns][sc.z].sc;
-     }
-     }else if(sc.s == 1){
-     ns = 3;
-     if(sc.y == 0){
-     return lattice[sc.x][MCP.cellsB - 1][ns][sc.z].sc;
-     }else{
-     return lattice[sc.x][sc.y - 1][ns][sc.z].sc;
-     }
-     }else{
-     std::cerr << "Wrong sublattice" << std::endl;
-     exit(1);
-     return sc;
-     }
-     */
     
 }
 
-SpinCoordinates MonteCarlo::getSpinCoordsInTheYDir(SpinCoordinates sc) const{
-    uint_fast8_t ns;//next spin's sublattice
+const ClassicalSpin3D& MonteCarlo::getSpinInTheYDir(const ClassicalSpin3D& a) const{
+    int aY = a.yPos;
+    int aS = a.sPos;
+    int aX = a.xPos;
+    int aZ = a.zPos;
+    int ns = 0;//next spin's sublattice
     
-    switch (sc.s) {
-        case 0:
-            ns = 2;
-            return lattice[sc.x][sc.y][ns][sc.z].sc;
-            break;
-            
-        case 1:
-            ns = 3;
-            return lattice[sc.x][sc.y][ns][sc.z].sc;
-            break;
-            
-        case 2:
-            ns = 0;
-            if(sc.y == MCP.cellsB - 1){
-                return lattice[sc.x][0][ns][sc.z].sc;
-            }else{
-                return lattice[sc.x][sc.y + 1][ns][sc.z].sc;
-            }
-            break;
-            
-        case 3:
-            ns = 1;
-            if(sc.y == MCP.cellsB - 1){
-                return lattice[sc.x][0][ns][sc.z].sc;
-            }else{
-                return lattice[sc.x][sc.y + 1][ns][sc.z].sc;
-            }
-            break;
-            
-        default:
-            exit(1);
-            break;
+    if(aS == 0){
+        ns = 2;
+        return lattice[aX][aY][ns][aZ];
+    }else if(aS == 1){
+        ns = 3;
+        return lattice[aX][aY][ns][aZ];
+    }else if(aS == 2){
+        ns = 0;
+        if(aY == MCP.cellsB - 1){
+            return lattice[aX][0][ns][aZ];
+        }else{
+            return lattice[aX][aY + 1][ns][aZ];
+        }
+    }else if(aS == 3){
+        ns = 1;
+        if(aY == MCP.cellsB - 1){
+            return lattice[aX][0][ns][aZ];
+        }else{
+            return lattice[aX][aY + 1][ns][aZ];
+        }
+    }else{
+        std::cerr << "Wrong sublattice" << std::endl;
+        exit(1);
+        return a;
     }
-    
-    /*
-     if(sc.s == 0){
-     ns = 2;
-     return lattice[sc.x][sc.y][ns][sc.z].sc;
-     }else if(sc.s == 1){
-     ns = 3;
-     return lattice[sc.x][sc.y][ns][sc.z].sc;
-     }else if(sc.s == 2){
-     ns = 0;
-     if(sc.y == MCP.cellsB - 1){
-     return lattice[sc.x][0][ns][sc.z].sc;
-     }else{
-     return lattice[sc.x][sc.y + 1][ns][sc.z].sc;
-     }
-     }else if(sc.s == 3){
-     ns = 1;
-     if(sc.y == MCP.cellsB - 1){
-     return lattice[sc.x][0][ns][sc.z].sc;
-     }else{
-     return lattice[sc.x][sc.y + 1][ns][sc.z].sc;
-     }
-     }else{
-     std::cerr << "Wrong sublattice" << std::endl;
-     exit(1);
-     return sc;
-     }
-     */
     
 }
 
-SpinCoordinates MonteCarlo::getSpinCoordsInTheUpDir(SpinCoordinates sc) const{
+const ClassicalSpin3D& MonteCarlo::getSpinInTheUpDir(const ClassicalSpin3D& a) const{
+    int aY = a.yPos;
+    int aX = a.xPos;
+    int aZ = a.zPos;
     
     if(MCP.cellsC == 1){
-        return sc;
+        return a;
     }else{
-        if(sc.z == MCP.cellsC - 1){
-            return lattice[sc.x][sc.y][sc.s][0].sc;
+        if(aZ == MCP.cellsC - 1){
+            return lattice[aX][aY][a.sPos][0];
         }else{
-            return lattice[sc.x][sc.y][sc.s][sc.z + 1].sc;
+            return lattice[aX][aY][a.sPos][aZ + 1];
         }
     }
-    return sc;
+    return a;
 }
 
-SpinCoordinates MonteCarlo::getSpinCoordsInTheDownDir(SpinCoordinates sc) const{
+const ClassicalSpin3D& MonteCarlo::getSpinInTheDownDir(const ClassicalSpin3D& a) const{
+    int aY = a.yPos;
+    int aX = a.xPos;
+    int aZ = a.zPos;
     
     if(MCP.cellsC == 1){
-        return sc;
+        return a;
     }else{
-        if(sc.z == 0){
-            return lattice[sc.x][sc.y][sc.s][MCP.cellsC - 1].sc;
+        if(aZ == 0){
+            return lattice[aX][aY][a.sPos][MCP.cellsC - 1];
         }else{
-            return lattice[sc.x][sc.y][sc.s][sc.z - 1].sc;
+            return lattice[aX][aY][a.sPos][aZ - 1];
         }
     }
-    return sc;
+    return a;
     
 }
 
 void MonteCarlo::setNearestNeighbors(){
-    SpinCoordinates sc;
     
     for(int i = 0; i < MCP.cellsA; i++){
         for(int j = 0; j < MCP.cellsB; j++){
             for(int k = 0; k < NUMSUBLATTICES; k++){
                 for(int z = 0; z < MCP.cellsC; z++){
                     
-                    NN_x[i][j][k][z] = getSpinCoordsInTheXDir(lattice[i][j][k][z].sc);
-                    NN_y[i][j][k][z] = getSpinCoordsInTheYDir(lattice[i][j][k][z].sc);
-                    NN_mx[i][j][k][z] = getSpinCoordsInTheMinusXDir(lattice[i][j][k][z].sc);
-                    NN_my[i][j][k][z] = getSpinCoordsInTheMinusYDir(lattice[i][j][k][z].sc);
+                    NN_x[i][j][k][z] = &getSpinInTheXDir(lattice[i][j][k][z]);
+                    NN_y[i][j][k][z] = &getSpinInTheYDir(lattice[i][j][k][z]);
+                    NN_mx[i][j][k][z] = &getSpinInTheMinusXDir(lattice[i][j][k][z]);
+                    NN_my[i][j][k][z] = &getSpinInTheMinusYDir(lattice[i][j][k][z]);
                     
-                    sc = getSpinCoordsInTheXDir(lattice[i][j][k][z].sc);
-                    NN2_xy[i][j][k][z] = getSpinCoordsInTheYDir(sc);
+                    ClassicalSpin3D temp1 = getSpinInTheXDir(lattice[i][j][k][z]);
+                    NN2_xy[i][j][k][z] = &getSpinInTheYDir(temp1);
                     
-                    sc = getSpinCoordsInTheMinusXDir(lattice[i][j][k][z].sc);
-                    NN2_mxy[i][j][k][z] = getSpinCoordsInTheYDir(sc);
+                    ClassicalSpin3D temp2 = getSpinInTheMinusXDir(lattice[i][j][k][z]);
+                    NN2_mxy[i][j][k][z] = &getSpinInTheYDir(temp2);
                     
-                    sc = getSpinCoordsInTheMinusXDir(lattice[i][j][k][z].sc);
-                    NN2_mxmy[i][j][k][z] = getSpinCoordsInTheMinusYDir(sc);
+                    ClassicalSpin3D temp3 = getSpinInTheMinusXDir(lattice[i][j][k][z]);
+                    NN2_mxmy[i][j][k][z] = &getSpinInTheMinusYDir(temp3);
                     
-                    sc = getSpinCoordsInTheXDir(lattice[i][j][k][z].sc);
-                    NN2_xmy[i][j][k][z] = getSpinCoordsInTheMinusYDir(sc);
+                    ClassicalSpin3D temp4 = getSpinInTheXDir(lattice[i][j][k][z]);
+                    NN2_xmy[i][j][k][z] = &getSpinInTheMinusYDir(temp4);
                     
-                    sc = getSpinCoordsInTheXDir(lattice[i][j][k][z].sc);
-                    NN3_xx[i][j][k][z] = getSpinCoordsInTheXDir(sc);
+                    ClassicalSpin3D temp5 = getSpinInTheXDir(lattice[i][j][k][z]);
+                    NN3_xx[i][j][k][z] = &getSpinInTheXDir(temp5);
                     
-                    sc = getSpinCoordsInTheMinusXDir(lattice[i][j][k][z].sc);
-                    NN3_mxmx[i][j][k][z] = getSpinCoordsInTheMinusXDir(sc);
+                    ClassicalSpin3D temp6 = getSpinInTheMinusXDir(lattice[i][j][k][z]);
+                    NN3_mxmx[i][j][k][z] = &getSpinInTheMinusXDir(temp6);
                     
-                    sc = getSpinCoordsInTheYDir(lattice[i][j][k][z].sc);
-                    NN3_yy[i][j][k][z] = getSpinCoordsInTheYDir(sc);
+                    ClassicalSpin3D temp7 = getSpinInTheYDir(lattice[i][j][k][z]);
+                    NN3_yy[i][j][k][z] = &getSpinInTheYDir(temp7);
                     
-                    sc = getSpinCoordsInTheMinusYDir(lattice[i][j][k][z].sc);
-                    NN3_mymy[i][j][k][z] = getSpinCoordsInTheMinusYDir(sc);
+                    ClassicalSpin3D temp8 = getSpinInTheMinusYDir(lattice[i][j][k][z]);
+                    NN3_mymy[i][j][k][z] = &getSpinInTheMinusYDir(temp8);
                     
                 }
             }
@@ -1454,7 +1332,7 @@ void MonteCarlo::init(){
     
     setParamNames();
     
-    outputFileName           = "";
+    outputMag           = "";
     
     
     cout<<"Finished with init()"<<endl;
@@ -1500,7 +1378,7 @@ MonteCarlo::MonteCarlo(MCParameters input_parameters){
     MD.numSweepsPerformed           = 0;
     MD.numSweepsUsedToThermalize    = 0;
     
-    outputFileName           = MCP.path;
+    outputMag           = MCP.path;
     
     if(MCP.isBField){
         double size = sqrt(MCP.bField_x * MCP.bField_x +
@@ -1525,15 +1403,15 @@ MonteCarlo::MonteCarlo(bool reThermalize, string filename){
     init();
     
     //Reading in the rest of the lattice information from the saved file
-    outputFileName = filename;
+    outputMag = filename;
     
     string line = "";
     ifstream file;
     file.clear();
-    file.open(outputFileName.c_str());
+    file.open(outputMag.c_str());
     if (!file.is_open() || !file.good()){
         cerr << "Can't open file: " << endl;
-        cerr << outputFileName <<endl;
+        cerr << outputMag <<endl;
         exit(3161990);
     }
     line = "";
@@ -1715,10 +1593,10 @@ MonteCarlo::MonteCarlo(bool reThermalize, string filename){
     //Copying Spin Components
     line = "";
     file.clear();
-    file.open(outputFileName.c_str());
+    file.open(outputMag.c_str());
     if (!file.is_open() || !file.good()){
         cerr << "Can't open file: " << endl;
-        cerr << outputFileName <<endl;
+        cerr << outputMag <<endl;
         exit(3161990);
     }
     line = "";
@@ -1774,11 +1652,11 @@ MonteCarlo::MonteCarlo(bool reThermalize, string filename){
             for(int j = 0; j < MCP.cellsB; j++){
                 for(int k = 0; k < NUMSUBLATTICES; k++){
                     for(int z = 0; z < MCP.cellsC; z++){
-                        setRandomOrientation(lattice[i][j][k][z].sc);
-                        lattice[i][j][k][z].sc.x = i;
-                        lattice[i][j][k][z].sc.y = j;
-                        lattice[i][j][k][z].sc.s = k;
-                        lattice[i][j][k][z].sc.z = z;
+                        lattice[i][j][k][z].setRandomOrientation();
+                        lattice[i][j][k][z].xPos = i;
+                        lattice[i][j][k][z].yPos = j;
+                        lattice[i][j][k][z].sPos = k;
+                        lattice[i][j][k][z].zPos = z;
                         
                         recipLattice[i][j][k][z].ReXComponent = 0;
                         recipLattice[i][j][k][z].ReYComponent = 0;
@@ -1848,23 +1726,23 @@ void MonteCarlo::adjustRange(){
 bool MonteCarlo::thermalize(double KbT_, int numSweepsToDo, double durationOfSingleRun){
     
     /*
-     double totalInteraction = 0;
-     
-     
-     clock_t t0 = clock();
-     
-     totalInteraction = getLocalEnergy(lattice[0][0][0][0],true);
-     
-     cout<< clock() - t0 << endl;
-     t0 = clock();
-     
-     totalInteraction = getLocalEnergy0(lattice[0][0][0][0],true);
-     
-     cout << clock() - t0 << endl;
-     totalInteraction = 10;
-     cout << totalInteraction << endl;
-     exit(0);
-     */
+    double totalInteraction = 0;
+
+    
+    clock_t t0 = clock();
+    
+    totalInteraction = getLocalEnergy(lattice[0][0][0][0],true);
+    
+    cout<< clock() - t0 << endl;
+    t0 = clock();
+    
+    totalInteraction = getLocalEnergy0(lattice[0][0][0][0],true);
+    
+    cout << clock() - t0 << endl;
+    totalInteraction = 10;
+    cout << totalInteraction << endl;
+    exit(0);
+    */
     
     double oldKbT = MCP.KbT;
     MCP.KbT = KbT_;
@@ -2003,15 +1881,12 @@ void MonteCarlo::updateOrderParameters(){
     double Z = 0;
     double PX = 0;
     double PY = 0;
-    double Q = 0;
     double M[SPINDIMEN] = {0};
     double N[SPINDIMEN] = {0};
     double SX[SPINDIMEN] = {0};
     double SY[SPINDIMEN] = {0};
-    double Dimer = 0;
-    SpinCoordinates sc;
-    ClassicalSpin3D a1_x;
-    ClassicalSpin3D a1_y;
+    //ClassicalSpin3D a1_x;
+    //ClassicalSpin3D a1_y;
     
     for(int i = 0; i < MCP.cellsA; i++){
         for(int j = 0; j < MCP.cellsB; j++){
@@ -2023,7 +1898,7 @@ void MonteCarlo::updateOrderParameters(){
                     Z = lattice[i][j][k][z].z;
                     
                     //OP: E
-                    E += getLocalEnergy(lattice[i][j][k][z].sc, false);
+                    E += getLocalEnergy(lattice[i][j][k][z], false);
                     //End OP: E
                     
                     //OP: M
@@ -2074,16 +1949,11 @@ void MonteCarlo::updateOrderParameters(){
                      a1_y = getSpinInTheYDir(lattice[i][j][k][z]);
                      */
                     
-                    sc = NN_x[i][j][k][z];
-                    a1_x = lattice[sc.x][sc.y][sc.s][sc.z];
-                    sc = NN_y[i][j][k][z];
-                    a1_y = lattice[sc.x][sc.y][sc.s][sc.z];
+                    ClassicalSpin3D a1_x = *NN_x[i][j][k][z];
+                    ClassicalSpin3D a1_y = *NN_y[i][j][k][z];
                     
                     PX += (X * a1_x.x + Y * a1_x.y + Z * a1_x.z);
                     PY += (X * a1_y.x + Y * a1_y.y + Z * a1_y.z);
-                    Q += PX - PY;
-                    
-                    Dimer += 0;
                     
                 }
             }
@@ -2095,7 +1965,7 @@ void MonteCarlo::updateOrderParameters(){
     
     OP.PX = PX;
     OP.PY = PY;
-    OP.Q = Q;
+    OP.Q = PX - PY;
     
     //All Order parameters are per site
     const double numSites = MCP.cellsA * MCP.cellsB * MCP.cellsC * NUMSUBLATTICES * 1.0;
@@ -2163,9 +2033,8 @@ void MonteCarlo::updateCorrelationFunction(){
     double N[SPINDIMEN][NUMCORRSPINSBIG] = {0};
     double SX[SPINDIMEN][NUMCORRSPINSBIG] = {0};
     double SY[SPINDIMEN][NUMCORRSPINSBIG] = {0};
-    SpinCoordinates sc;
-    ClassicalSpin3D a1_x;
-    ClassicalSpin3D a1_y;
+    //ClassicalSpin3D a1_x;
+    //ClassicalSpin3D a1_y;
     
     int j = 0;
     int i = 0;
@@ -2189,7 +2058,7 @@ void MonteCarlo::updateCorrelationFunction(){
         z = 0;
         
         //OP: E
-        E[count] = getLocalEnergy(lattice[i][j][k][z].sc, false);
+        E[count] = getLocalEnergy(lattice[i][j][k][z], false);
         //End OP: E
         
         
@@ -2245,10 +2114,8 @@ void MonteCarlo::updateCorrelationFunction(){
          a1_y = getSpinInTheYDir(lattice[i][j][k][z]);
          */
         
-        sc = NN_x[i][j][k][z];
-        a1_x = lattice[sc.x][sc.y][sc.s][sc.z];
-        sc = NN_y[i][j][k][z];
-        a1_y = lattice[sc.x][sc.y][sc.s][sc.z];
+        ClassicalSpin3D a1_x = *NN_x[i][j][k][z];
+        ClassicalSpin3D a1_y = *NN_y[i][j][k][z];
         
         PX[count] += (X * a1_x.x + Y * a1_x.y + Z * a1_x.z);
         PY[count] += (X * a1_y.x + Y * a1_y.y + Z * a1_y.z);
@@ -2311,6 +2178,7 @@ void MonteCarlo::updateFourierTransformOnRecipLattice(){
     
     cout<<MD.numConfigsDone<<endl;
     cout<<FTTOUPDATES<<endl;
+    const double numSites = MCP.cellsA *MCP.cellsB * MCP.cellsC * NUMSUBLATTICES * 1.0;
     double kvector_x = 0;
     double kvector_y = 0;
     double rvector_x = 0;
@@ -2466,301 +2334,67 @@ void MonteCarlo::addToMagStats(){
 
 
 /******************************************************************************/
-//Spin Functions
-/******************************************************************************/
-
-void MonteCarlo::setSpinToZero(SpinCoordinates sc){
-    lattice[sc.x][sc.y][sc.s][sc.z].x = 0;
-    lattice[sc.x][sc.y][sc.s][sc.z].y = 0;
-    lattice[sc.x][sc.y][sc.s][sc.z].z = 0;
-}
-
-void MonteCarlo::setSpin(SpinCoordinates sc, double x_, double y_, double z_){
-    lattice[sc.x][sc.y][sc.s][sc.z].x = x_;
-    lattice[sc.x][sc.y][sc.s][sc.z].y = y_;
-    lattice[sc.x][sc.y][sc.s][sc.z].z = z_;
-}
-
-void MonteCarlo::checkSpin(SpinCoordinates sc){
-    double size = sqrt(lattice[sc.x][sc.y][sc.s][sc.z].x*
-                       lattice[sc.x][sc.y][sc.s][sc.z].x +
-                       lattice[sc.x][sc.y][sc.s][sc.z].y*
-                       lattice[sc.x][sc.y][sc.s][sc.z].y +
-                       lattice[sc.x][sc.y][sc.s][sc.z].z*
-                       lattice[sc.x][sc.y][sc.s][sc.z].z);
-    lattice[sc.x][sc.y][sc.s][sc.z].x = lattice[sc.x][sc.y][sc.s][sc.z].x / size;
-    lattice[sc.x][sc.y][sc.s][sc.z].y = lattice[sc.x][sc.y][sc.s][sc.z].y / size;
-    lattice[sc.x][sc.y][sc.s][sc.z].z = lattice[sc.x][sc.y][sc.s][sc.z].z / size;
-    if((lattice[sc.x][sc.y][sc.s][sc.z].x > 1 || lattice[sc.x][sc.y][sc.s][sc.z].x < -1)||
-       (lattice[sc.x][sc.y][sc.s][sc.z].y > 1 || lattice[sc.x][sc.y][sc.s][sc.z].y < -1)||
-       (lattice[sc.x][sc.y][sc.s][sc.z].z > 1 || lattice[sc.x][sc.y][sc.s][sc.z].z < -1)||
-       (lattice[sc.x][sc.y][sc.s][sc.z].x != lattice[sc.x][sc.y][sc.s][sc.z].x)||
-       (lattice[sc.x][sc.y][sc.s][sc.z].y != lattice[sc.x][sc.y][sc.s][sc.z].y)||
-       (lattice[sc.x][sc.y][sc.s][sc.z].z != lattice[sc.x][sc.y][sc.s][sc.z].z)||
-       ((fabs(sqrt(lattice[sc.x][sc.y][sc.s][sc.z].x *
-                   lattice[sc.x][sc.y][sc.s][sc.z].x +
-                   lattice[sc.x][sc.y][sc.s][sc.z].y *
-                   lattice[sc.x][sc.y][sc.s][sc.z].y +
-                   lattice[sc.x][sc.y][sc.s][sc.z].z *
-                   lattice[sc.x][sc.y][sc.s][sc.z].z) - 1)) >= 0.000001) ){
-        std::cerr << "Error: Bad Spin values: " << "x: " << lattice[sc.x][sc.y][sc.s][sc.z].x << std::endl;
-        std::cerr << "Error: Bad Spin values: " << "y: " << lattice[sc.x][sc.y][sc.s][sc.z].y << std::endl;
-        std::cerr << "Error: Bad Spin values: " << "z: " << lattice[sc.x][sc.y][sc.s][sc.z].z << std::endl;
-        std::cerr << "Error: Bad Spin values: " << "Magnitude: " <<
-        std::setprecision(15) << std::setw(15) <<
-        sqrt(lattice[sc.x][sc.y][sc.s][sc.z].x *
-             lattice[sc.x][sc.y][sc.s][sc.z].x +
-             lattice[sc.x][sc.y][sc.s][sc.z].y *
-             lattice[sc.x][sc.y][sc.s][sc.z].y +
-             lattice[sc.x][sc.y][sc.s][sc.z].z *
-             lattice[sc.x][sc.y][sc.s][sc.z].z) << std::endl;
-        exit(1);
-    }
-}
-
-void MonteCarlo::setRandomOrientation(SpinCoordinates sc){
-    lattice[sc.x][sc.y][sc.s][sc.z].x = 2 * drand48() - 1;
-    lattice[sc.x][sc.y][sc.s][sc.z].y = 2 * drand48() - 1;
-    lattice[sc.x][sc.y][sc.s][sc.z].z = 2 * drand48() - 1;
-    double size = sqrt(lattice[sc.x][sc.y][sc.s][sc.z].x *
-                       lattice[sc.x][sc.y][sc.s][sc.z].x +
-                       lattice[sc.x][sc.y][sc.s][sc.z].y *
-                       lattice[sc.x][sc.y][sc.s][sc.z].y +
-                       lattice[sc.x][sc.y][sc.s][sc.z].z *
-                       lattice[sc.x][sc.y][sc.s][sc.z].z);
-    lattice[sc.x][sc.y][sc.s][sc.z].x = lattice[sc.x][sc.y][sc.s][sc.z].x / size;
-    lattice[sc.x][sc.y][sc.s][sc.z].y = lattice[sc.x][sc.y][sc.s][sc.z].y / size;
-    lattice[sc.x][sc.y][sc.s][sc.z].z = lattice[sc.x][sc.y][sc.s][sc.z].z / size;
-    flip(lattice[sc.x][sc.y][sc.s][sc.z].sc, PI-0.01);
-}
-
-
-void MonteCarlo::specifyRotation(SpinCoordinates sc, double rotPhi, double rotTheta){
-    
-    //Converts to spherical (in order to construct a perpendicular vector).
-    //measured from the vertical.
-    double theta = acos(lattice[sc.x][sc.y][sc.s][sc.z].z);
-    double phi = atan2(lattice[sc.x][sc.y][sc.s][sc.z].y,
-                       lattice[sc.x][sc.y][sc.s][sc.z].x);
-    
-    theta = theta + rotTheta;
-    phi = phi + rotPhi;
-    
-    if((theta > PI) && (theta < 2 * PI)){
-        theta = PI - (theta - PI);
-        phi = phi + PI;//new
-    }else if (theta >= 2 * PI){
-        theta = theta - 2 * PI;
-    }
-    
-    if(phi > 2 * PI){
-        phi = phi - 2 * PI;
-    }
-    if(phi > 2 * PI){
-        phi = phi - 2 * PI;
-    }
-    
-    lattice[sc.x][sc.y][sc.s][sc.z].x = sin(theta) * cos(phi);
-    lattice[sc.x][sc.y][sc.s][sc.z].y = sin(theta) * sin(phi);
-    lattice[sc.x][sc.y][sc.s][sc.z].z = cos(theta);
-    
-    checkSpin(lattice[sc.x][sc.y][sc.s][sc.z].sc);
-    
-}
-void MonteCarlo::reset(SpinCoordinates sc){
-    //lattice[sc.x][sc.y][sc.s][sc.z].x = lattice[sc.x][sc.y][sc.s][sc.z].xOld;
-    //lattice[sc.x][sc.y][sc.s][sc.z].y = lattice[sc.x][sc.y][sc.s][sc.z].yOld;
-    //lattice[sc.x][sc.y][sc.s][sc.z].z = lattice[sc.x][sc.y][sc.s][sc.z].zOld;
-}
-void MonteCarlo::clear(SpinCoordinates sc){
-    lattice[sc.x][sc.y][sc.s][sc.z].x = 0;
-    lattice[sc.x][sc.y][sc.s][sc.z].y = 0;
-    lattice[sc.x][sc.y][sc.s][sc.z].z = 0;
-}
-/**Does rotation using quaternions. Requires that the spin has cartesian
- *components but that the axis that it rotates around is in spherical.
- *
- *Note: this function should be replaced with a function that only uses
- *spherical coordinates or only cartesian coordinates.
- */
-void MonteCarlo::rotate(SpinCoordinates sc, double theta_, double phi_, double Beta) {
-    double M[3][3];
-    double q0, q1, q2, q3;
-    double newS[3] = {0};
-    q0 = cos(Beta / 2.0);
-    q1 = sin(Beta / 2.0) * sin(theta_) * cos(phi_);
-    q2 = sin(Beta / 2.0) * sin(theta_) * sin(phi_);
-    q3 = sin(Beta / 2.0) * cos(theta_);
-    M[0][0] = q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3;
-    M[0][1] = 2.0 * (q1 * q2 - q0 * q3);
-    M[0][2] = 2.0 * (q1 * q3 + q0 * q2);
-    M[1][0] = 2.0 * (q2 * q1 + q0 * q3);
-    M[1][1] = q0 * q0 - q1 * q1 + q2 * q2 - q3 * q3;
-    M[1][2] = 2.0 * (q2 * q3 - q0 * q1);
-    M[2][0] = 2.0 * (q3 * q1 - q0 * q2);
-    M[2][1] = 2.0 * (q3 * q2 + q0 * q1);
-    M[2][2] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
-    
-    /*
-     for(int i = 0; i < 3; i ++){
-     for(int j = 0; j < 3; j++){
-     newS[i] += M[i][j] * components[j];
-     }
-     }
-     */
-    
-    for(int i = 0; i < 3; i ++){
-        for(int j = 0; j < 3; j++){
-            if(i == 0 && j == 0){
-                newS[i] += M[i][j] * lattice[sc.x][sc.y][sc.s][sc.z].x;
-            }else if(i == 0 && j == 1){
-                newS[i] += M[i][j] * lattice[sc.x][sc.y][sc.s][sc.z].y;
-            }else if(i == 0 && j == 2){
-                newS[i] += M[i][j] * lattice[sc.x][sc.y][sc.s][sc.z].z;
-            }else if(i == 1 && j == 0){
-                newS[i] += M[i][j] * lattice[sc.x][sc.y][sc.s][sc.z].x;
-            }else if(i == 1 && j == 1){
-                newS[i] += M[i][j] * lattice[sc.x][sc.y][sc.s][sc.z].y;
-            }else if(i == 1 && j == 2){
-                newS[i] += M[i][j] * lattice[sc.x][sc.y][sc.s][sc.z].z;
-            }else if(i == 2 && j == 0){
-                newS[i] += M[i][j] * lattice[sc.x][sc.y][sc.s][sc.z].x;
-            }else if(i == 2 && j == 1){
-                newS[i] += M[i][j] * lattice[sc.x][sc.y][sc.s][sc.z].y;
-            }else if(i == 2 && j == 2){
-                newS[i] += M[i][j] * lattice[sc.x][sc.y][sc.s][sc.z].z;
-            }else{
-                std::cerr << "Bad Rotation" << std::endl;
-                exit(1);
-            }
-        }
-    }
-    
-    //In Cartesian
-    lattice[sc.x][sc.y][sc.s][sc.z].x = newS[0];
-    lattice[sc.x][sc.y][sc.s][sc.z].y = newS[1];
-    lattice[sc.x][sc.y][sc.s][sc.z].z = newS[2];
-}
-
-/**
- *First we construct a new spin perpendicular to the initial configuration by
- *adding PI/2 to the zenith angle. Then, this new vector is rotated, within the
- *same plane, anywhere in 2*PI radians. Lastly, the origial vector is rotated
- *around the perp spin by the angle "range"
- */
-void MonteCarlo::flip(SpinCoordinates sc, double range){
-    
-    
-    double u[3];
-    //Cross product with a sufficiently far away "g" to find a perp vector.
-    //u[0] = g2s3 - g3s2;
-    //u[1] = g3s1 - g1s3;
-    //u[2] = g1s2 - g2s1;
-    if(lattice[sc.x][sc.y][sc.s][sc.z].x > 0.57) {//g = (0,1,0)
-        u[0] = lattice[sc.x][sc.y][sc.s][sc.z].z;
-        u[1] = 0;
-        u[2] = (-1) * lattice[sc.x][sc.y][sc.s][sc.z].x;
-    }else if(lattice[sc.x][sc.y][sc.s][sc.z].y > 0.57){//g = (0,0,1)
-        u[0] = (-1) * lattice[sc.x][sc.y][sc.s][sc.z].y;
-        u[1] = lattice[sc.x][sc.y][sc.s][sc.z].x;
-        u[2] = 0;
-    }
-    else{//g = (1,0,0)
-        u[0] = 0;
-        u[1] = (-1) * lattice[sc.x][sc.y][sc.s][sc.z].z;
-        u[2] = lattice[sc.x][sc.y][sc.s][sc.z].y;
-    }
-    
-    //Cross product to find third Orthogonal vector
-    double v[3] = { u[1]*
-        lattice[sc.x][sc.y][sc.s][sc.z].z -
-        u[2]*lattice[sc.x][sc.y][sc.s][sc.z].y,
-        u[2]*lattice[sc.x][sc.y][sc.s][sc.z].x -
-        u[0]*lattice[sc.x][sc.y][sc.s][sc.z].z,
-        u[0]*lattice[sc.x][sc.y][sc.s][sc.z].y -
-        u[1]*lattice[sc.x][sc.y][sc.s][sc.z].x};
-    
-    //Normalize vectors
-    double size = sqrt(u[0]*u[0] + u[1]*u[1] + u[2]*u[2]);
-    u[0] = u[0] / size;
-    u[1] = u[1] / size;
-    u[2] = u[2] / size;
-    
-    size = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
-    v[0] = v[0] / size;
-    v[1] = v[1] / size;
-    v[2] = v[2] / size;
-    
-    //spin, u, v are orthonormal.
-    //See these two sites:
-    //http://www.math.niu.edu/~rusin/known-math/96/sph.rand
-    //http://objectmix.com/graphics/314285-random-points-spherical-cap.html
-    //(copied below)
-    //Except that the second link needs to be modified in a number of ways to
-    //apply correctly to this situation. Most notably, before adding the radial
-    //vector (from a vector in the plane perp to the spin) to the spin vector,
-    //we need to shorten the spin vector such that the addition of the radial
-    //vector lands on the surface of the sphere. We cannot simply normalize
-    //at the end like they say.
-    
-    //Size of circle:
-    if(range >= PI){range = PI;}
-    double r = drand48() * 2.0 * PI;
-    double distFromOrig = cos(range);//works both for pos dist and neg dist.
-    double circDist = drand48() * (1 - distFromOrig) + distFromOrig;
-    double circleRadius = sqrt(1 - circDist*circDist);
-    
-    double cosr = cos(r);
-    double sinr = sin(r);
-    
-    lattice[sc.x][sc.y][sc.s][sc.z].x = lattice[sc.x][sc.y][sc.s][sc.z].x * circDist;
-    lattice[sc.x][sc.y][sc.s][sc.z].y = lattice[sc.x][sc.y][sc.s][sc.z].y * circDist;
-    lattice[sc.x][sc.y][sc.s][sc.z].z = lattice[sc.x][sc.y][sc.s][sc.z].z * circDist;
-    
-    lattice[sc.x][sc.y][sc.s][sc.z].x = lattice[sc.x][sc.y][sc.s][sc.z].x + circleRadius * (cosr * u[0] + sinr * v[0]);
-    lattice[sc.x][sc.y][sc.s][sc.z].y = lattice[sc.x][sc.y][sc.s][sc.z].y + circleRadius * (cosr * u[1] + sinr * v[1]);
-    lattice[sc.x][sc.y][sc.s][sc.z].z = lattice[sc.x][sc.y][sc.s][sc.z].z + circleRadius * (cosr * u[2] + sinr * v[2]);
-    
-    /*
-     //Should not be needed.
-     size = sqrt(x*x + y*y + z*z);
-     x = x / size;
-     y = y / size;
-     z = z / size;
-     */
-    
-}
-
-/******************************************************************************/
 //Core Functions
 /******************************************************************************/
 
 
 
-double MonteCarlo::getLocalEnergy(SpinCoordinates a, const bool fromSpinFlip) const{
+double MonteCarlo::getLocalEnergy0(const ClassicalSpin3D& a, const bool fromSpinFlip) const{
     double totalInteraction = 0;
     
+    /*
+     ClassicalSpin3D a1_x = getSpinInTheXDir(a);
+     ClassicalSpin3D a1_mx = getSpinInTheMinusXDir(a);
+     ClassicalSpin3D a1_y = getSpinInTheYDir(a);
+     ClassicalSpin3D a1_my = getSpinInTheMinusYDir(a);
+     
+     ClassicalSpin3D a2_xy =   getSpinInTheYDir(a1_x);
+     ClassicalSpin3D a2_mxy =  getSpinInTheYDir(a1_mx);
+     ClassicalSpin3D a2_mxmy = getSpinInTheMinusYDir(a1_mx);
+     ClassicalSpin3D a2_xmy =  getSpinInTheMinusYDir(a1_x);
+     
+     ClassicalSpin3D a3_xx =   getSpinInTheXDir(a1_x);
+     ClassicalSpin3D a3_mxmx = getSpinInTheMinusXDir(a1_mx);
+     ClassicalSpin3D a3_yy =   getSpinInTheYDir(a1_y);
+     ClassicalSpin3D a3_mymy = getSpinInTheMinusYDir(a1_my);
+     */
     
-    double temp = (dotProd(a, NN_x[a.x][a.y][a.s][a.z]) +
-                   dotProd(a, NN_mx[a.x][a.y][a.s][a.z]) +
-                   dotProd(a, NN_y[a.x][a.y][a.s][a.z]) +
-                   dotProd(a, NN_my[a.x][a.y][a.s][a.z]));
     
-    double interactionH = MCP.j1 * (temp);
+    ClassicalSpin3D a1_x = *NN_x[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a1_mx = *NN_mx[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a1_y = *NN_y[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a1_my = *NN_my[a.xPos][a.yPos][a.sPos][a.zPos];
+    
+    ClassicalSpin3D a2_xy =   *NN2_xy[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a2_mxy =  *NN2_mxy[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a2_mxmy = *NN2_mxmy[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a2_xmy =  *NN2_xmy[a.xPos][a.yPos][a.sPos][a.zPos];
+    
+    ClassicalSpin3D a3_xx =   *NN3_xx[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a3_mxmx = *NN3_mxmx[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a3_yy =   *NN3_yy[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a3_mymy = *NN3_mymy[a.xPos][a.yPos][a.sPos][a.zPos];
+    
+    double interactionH = MCP.j1 * (a.dotProd(a1_x) +
+                                    a.dotProd(a1_mx) +
+                                    a.dotProd(a1_y) +
+                                    a.dotProd(a1_my));
     
     //Heisenberg interaction
     //2nd Neighbor interaction
-    double interactionH2 = MCP.j2 * (dotProd(a, NN2_xy[a.x][a.y][a.s][a.z]) +
-                                     dotProd(a, NN2_mxy[a.x][a.y][a.s][a.z]) +
-                                     dotProd(a, NN2_mxmy[a.x][a.y][a.s][a.z]) +
-                                     dotProd(a, NN2_xmy[a.x][a.y][a.s][a.z]));
+    double interactionH2 = MCP.j2 * (a.dotProd(a2_xy) + a.dotProd(a2_mxy) +
+                                     a.dotProd(a2_mxmy) + a.dotProd(a2_xmy));
     
     //3rd Neighbor interaction
-    double interactionH3 = MCP.j3 * (dotProd(a, NN3_xx[a.x][a.y][a.s][a.z]) +
-                                     dotProd(a, NN3_mxmx[a.x][a.y][a.s][a.z]) +
-                                     dotProd(a, NN3_yy[a.x][a.y][a.s][a.z]) +
-                                     dotProd(a, NN3_mymy[a.x][a.y][a.s][a.z]));
+    double interactionH3 = MCP.j3 * (a.dotProd(a3_xx) +
+                                     a.dotProd(a3_mxmx) +
+                                     a.dotProd(a3_yy) +
+                                     a.dotProd(a3_mymy));
     
+    double temp = (a.dotProd(a1_x) +
+                   a.dotProd(a1_mx) +
+                   a.dotProd(a1_y) +
+                   a.dotProd(a1_my));
     double interactionK = MCP.k1 * temp * temp;
     
     double interactionCubic = MCP.cubicD * (-1.0) * a.z * a.z;
@@ -2786,30 +2420,44 @@ double MonteCarlo::getLocalEnergy(SpinCoordinates a, const bool fromSpinFlip) co
     
 }
 
-double MonteCarlo::getLocalEnergyFromCalc(SpinCoordinates a, const bool fromSpinFlip) const{
+double MonteCarlo::getLocalEnergy(const ClassicalSpin3D& a, const bool fromSpinFlip) const{
     double totalInteraction = 0;
     
-    double temp = (dotProd(a, getSpinCoordsInTheXDir(a)) +
-                   dotProd(a, getSpinCoordsInTheMinusXDir(a)) +
-                   dotProd(a, getSpinCoordsInTheYDir(a)) +
-                   dotProd(a, getSpinCoordsInTheMinusYDir(a)));
+    ClassicalSpin3D a1_x = *NN_x[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a1_mx = *NN_mx[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a1_y = *NN_y[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a1_my = *NN_my[a.xPos][a.yPos][a.sPos][a.zPos];
     
-    double interactionH = MCP.j1 * (temp);
+    ClassicalSpin3D a2_xy =   *NN2_xy[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a2_mxy =  *NN2_mxy[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a2_mxmy = *NN2_mxmy[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a2_xmy =  *NN2_xmy[a.xPos][a.yPos][a.sPos][a.zPos];
     
+    ClassicalSpin3D a3_xx =   *NN3_xx[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a3_mxmx = *NN3_mxmx[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a3_yy =   *NN3_yy[a.xPos][a.yPos][a.sPos][a.zPos];
+    ClassicalSpin3D a3_mymy = *NN3_mymy[a.xPos][a.yPos][a.sPos][a.zPos];
+    
+    double interactionH = MCP.j1 * (a.dotProd(a1_x) +
+                                    a.dotProd(a1_mx) +
+                                    a.dotProd(a1_y) +
+                                    a.dotProd(a1_my));
     
     //Heisenberg interaction
     //2nd Neighbor interaction
-    double interactionH2 = MCP.j2 * (dotProd(a, getSpinCoordsInTheYDir(getSpinCoordsInTheXDir(a))) +
-                                     dotProd(a, getSpinCoordsInTheMinusXDir(getSpinCoordsInTheYDir(a))) +
-                                     dotProd(a, getSpinCoordsInTheMinusXDir(getSpinCoordsInTheMinusYDir(a))) +
-                                     dotProd(a, getSpinCoordsInTheXDir(getSpinCoordsInTheMinusYDir(a))));
+    double interactionH2 = MCP.j2 * (a.dotProd(a2_xy) + a.dotProd(a2_mxy) +
+                                     a.dotProd(a2_mxmy) + a.dotProd(a2_xmy));
     
     //3rd Neighbor interaction
-    double interactionH3 = MCP.j3 * (dotProd(a, getSpinCoordsInTheXDir(getSpinCoordsInTheXDir(a))) +
-                                     dotProd(a, getSpinCoordsInTheMinusXDir(getSpinCoordsInTheMinusXDir(a))) +
-                                     dotProd(a, getSpinCoordsInTheYDir(getSpinCoordsInTheYDir(a))) +
-                                     dotProd(a, getSpinCoordsInTheMinusYDir(getSpinCoordsInTheMinusYDir(a))));
+    double interactionH3 = MCP.j3 * (a.dotProd(a3_xx) +
+                                     a.dotProd(a3_mxmx) +
+                                     a.dotProd(a3_yy) +
+                                     a.dotProd(a3_mymy));
     
+    double temp = (a.dotProd(a1_x) +
+                   a.dotProd(a1_mx) +
+                   a.dotProd(a1_y) +
+                   a.dotProd(a1_my));
     double interactionK = MCP.k1 * temp * temp;
     
     double interactionCubic = MCP.cubicD * (-1.0) * a.z * a.z;
@@ -2834,15 +2482,11 @@ double MonteCarlo::getLocalEnergyFromCalc(SpinCoordinates a, const bool fromSpin
     return totalInteraction;
     
 }
-
 
 void MonteCarlo::metropolisSweep(){
     double   changeInEnergy  = 0;
     double   initialEnergy   = 0;
     double   finalEnergy     = 0;
-    double   xOld = 0;
-    double   yOld = 0;
-    double   zOld = 0;
     
     for(int i = 0; i < MCP.cellsA; i++){
         for(int j = 0; j < MCP.cellsB; j++){
@@ -2850,13 +2494,9 @@ void MonteCarlo::metropolisSweep(){
                 for(int z = 0; z < MCP.cellsC; z++)
                 {
                     //getSpin(i, j, k).checkSpin();
-                    initialEnergy = getLocalEnergy(lattice[i][j][k][z].sc , true);
-                    xOld = lattice[i][j][k][z].x;
-                    yOld = lattice[i][j][k][z].y;
-                    zOld = lattice[i][j][k][z].z;
-                    flip(lattice[i][j][k][z].sc, MD.range);
-                    finalEnergy = getLocalEnergy(lattice[i][j][k][z].sc, true);
-                    //finalEnergy = getLocalEnergyFromCalc(lattice[i][j][k][z].sc, true);
+                    initialEnergy = getLocalEnergy(lattice[i][j][k][z] , true);
+                    lattice[i][j][k][z].flip(MD.range);
+                    finalEnergy = getLocalEnergy(lattice[i][j][k][z], true);
                     changeInEnergy = finalEnergy - initialEnergy;
                     MD.flipAttempts += 1;
                     MD.successfulFlips += 1;
@@ -2873,10 +2513,7 @@ void MonteCarlo::metropolisSweep(){
                         {
                             
                             //resets spin
-                            //reset(lattice[i][j][k][z].sc);
-                            lattice[i][j][k][z].x = xOld;
-                            lattice[i][j][k][z].y = yOld;
-                            lattice[i][j][k][z].z = zOld;
+                            lattice[i][j][k][z].reset();
                             MD.successfulFlips -= 1;
                         }
                         else
@@ -2887,10 +2524,7 @@ void MonteCarlo::metropolisSweep(){
                     else if(changeInEnergy == 0 && initialEnergy == 0)
                     {
                         //resets spin
-                        //reset(lattice[i][j][k][z].sc);
-                        lattice[i][j][k][z].x = xOld;
-                        lattice[i][j][k][z].y = yOld;
-                        lattice[i][j][k][z].z = zOld;
+                        lattice[i][j][k][z].reset();
                         MD.successfulFlips -= 1;
                     }
                 }
@@ -2965,7 +2599,7 @@ void MonteCarlo::sweepSnapshot(int numSweeps_, int numIndep_, double hours_){
      
      stringstream out;
      out.str("");
-     string temp = outputFileName.substr(0,outputFileName.size()-4);
+     string temp = outputMag.substr(0,outputMag.size()-4);
      out << temp.c_str() << "OPSnap.txt";
      
      fileOut.open(out.str().c_str(), std::ios::out | std::ios::app);
@@ -2985,211 +2619,6 @@ void MonteCarlo::sweepSnapshot(int numSweeps_, int numIndep_, double hours_){
 }
 
 
-/*
- From: ags@seaman.cc.purdue.edu (Dave Seaman)
- Newsgroups: sci.math.num-analysis
- Subject: Re: N-dim spherical random number drawing
- Date: 20 Sep 1996 13:04:58 -0500
- 
- In article <wmEgVDG00VUtMEhUwg@andrew.cmu.edu>,
- Shing-Te Li  <sl2x+@andrew.cmu.edu> wrote:
- >Does anyone know a good algorithm that can draw a vector of random
- >numbers uniformly from a N dimensional sphere?
- 
- Here are four methods for generating uniformly-distributed points on a unit
- sphere:
- 
- (1) The normal-deviate method.  Choose x, y, and z, each
- normally-distributed with mean 0 and variance 1.  (Actually, the
- variance does not matter, provided it remains fixed.)  Normalize
- the result to obtain a uniform density on the unit sphere.
- 
- This method also generalizes nicely to n dimensions.  It works
- because the vector chosen (before normalization) has a density
- that depends only on the distance from the origin.  The method is
- mentioned in Knuth, _Seminumerical Algorithms_, 2nd. ed., pp.
- 130-131.
- 
- (2) The hypercube rejection method.  Choose x, y, and z, uniformly
- distributed on [-1,1].  Compute s = x^2 + y^2 + z^2.  If s > 1,
- reject the triplet and start over.  Once you have an acceptable
- vector, normalize it to obtain a point on the unit sphere.
- 
- This method also generalizes to n dimensions, but as the dimension
- increases the probability of rejection becomes high and many random
- numbers are wasted.
- 
- (3) The trig method.  This method works only in 3-space, but it is
- very fast.  It depends on the slightly counterintuitive fact (see
- proof below) that each of the three coordinates of a uniformly
- distributed point on S^2 is uniformly distributed on [-1,1] (but
- the three are not independent, obviously).  Therefore, it
- suffices to choose one axis (Z, say) and generate a uniformly
- distributed value on that axis.  This constrains the chosen point
- to lie on a circle parallel to the X-Y plane, and the obvious
- trig method may be used to obtain the remaining coordinates.
- 
-	(a) Choose z uniformly distributed in [-1,1].
-	(b) Choose t uniformly distributed on [0, 2*pi).
-	(c) Let r = sqrt(1-z^2).
-	(d) Let x = r * cos(t).
-	(e) Let y = r * sin(t).
- 
- (4) A variation of method (3) that doesn't use trig may be found in
- Knuth, _loc. cit._.  The method is equivalent to the following:
- 
-	(a) Choose u and v uniformly distributed on [-1,1].
-	(b) Let s = u^2 + v^2.
-	(c) If s > 1, return to step (a).
-	(d) Let a = 2 * sqrt(1-s).
-	(e) The desired point is (a*u, a*v, 2*s-1).
- 
- This method uses two-dimensional rejection, which gives a higher
- probability of acceptance compared to algorithm (2) in three
- dimensions.  I group this with the trig method because both
- depend on the fact that the projection on any axis is uniformly
- distributed on [-1,1], and therefore both methods are limited to
- use on S^2.
- 
- I have found the trig method to be fastest in tests on an IBM RS/6000
- model 590, using the XLF 3.2 Fortran compiler, with the IMSL
- subroutines DRNUN and DRNNOA generating the random numbers.  The trig
- routines were accelerated by using the MASS library, and sqrt
- computations were performed by the hardware sqrt instruction available
- on the 590.  Timings for 1 million random points on S^2:
- 
-	(1) normal-deviate method                   9.60 sec.
-	(2) 3-D rejection                           8.84 sec.
-	(3) trig method                             2.71 sec.
-	(4) polar with 2-D rejection                5.08 sec.
- 
- The fact that algorithm (3) does not involve rejection turns out to be
- a huge advantage because it becomes possible to generate all the points
- in a single loop with no conditional statements, which optimizes very
- effectively and more than offsets the cost of using trig functions.
- The alternative with algorithms (2) and (4) is to generate the points
- one at a time and test each one for acceptance before proceeding to the
- next, which requires nested loops and many more subroutine calls to
- generate the random numbers.  Algorithm (1) does not explicitly use
- rejection, but the IMSL subroutine DRNNOA uses rejection in generating
- the normally-distributed numbers that are required.
- 
- In higher dimensions, the normal-deviate method is preferred
- because the probability of rejection in the hypercube method
- grows very rapidly with the dimension.
- 
- --------------------------------------------------------------------
- 
- Here is a proof of correctness for the fact that the z-coordinate is
- uniformly distributed.  The proof also works for the x- and y-
- coordinates, but note that this works only in 3-space.
- 
- The area of a surface of revolution in 3-space is given by
- 
-	A = 2 * pi * int_a^b f(x) * sqrt(1 + [f'(x}]^2) dx
- 
- Consider a zone of a sphere of radius R.  Since we are integrating in
- the z direction, we have
- 
-	f(z) = sqrt(R^2 - z^2)
-	f'(z) = -z / sqrt(R^2-z^2)
- 
-	1 + [f'(z)]^2 = r^2 / (R^2-z^2)
- 
-	A = 2 * pi * int_a^b sqrt(R^2-z^2) * R/sqrt(R^2-z^2) dz
- 
- = 2 * pi * R int_a^b dz
- 
- = 2 * pi * R * (b-a)
- 
- = 2 * pi * R * h,
- 
- where h = b-a is the vertical height of the zone.  Notice how the integrand
- reduces to a constant.  The density is therefore uniform.
- 
- --
- Dave Seaman			dseaman@purdue.edu
- ++++ stop the execution of Mumia Abu-Jamal ++++
- ++++ if you agree copy these lines to your sig ++++
- ++++ see http://www.xs4all.nl/~tank/spg-l/sigaction.htm ++++
- ==============================================================================
- 
- From: George Marsaglia <geo@stat.fsu.edu>
- Subject: Random points on a sphere.
- Date: Tue, 15 Jun 1999 18:03:07 -0400
- Newsgroups: sci.math.num-analysis,sci.math,sci.stat.math
- 
- Questions on methods for random sampling from the surface
- of a sphere keep coming up, and seemingly get lost as
- new generations of computer users encounter the problem.
- 
- I described the methods that I had used for years in
- "Sampling from the surface of a sphere", Ann Math Stat, v43, 1972,
- recommending the two that seemed the fastest:
- 
- 1) Choose standard normal variates x1,x2,x3,
- put R=1/sqrt(x1^2+x2^2+x3^2) and return the point
- (x1*R,x2*R,x3*R).
- 
- 2) Generate u and v, uniform in [-1,1]  until S=u^2+v^2 < 1,
- then return (1-2*S,u*r,v*r), with r=2*sqrt(1-S).
- 
- The second method is fast and easiest to program---unless
- one already has a fast normal generator in his library.
- 
- Method 1) seems by far the fastest (and easily applies to higher
- dimensions) if my latest normal generator is used.
- It produces normal variates at the rate of seven million
- per second in a 300MHz Pc.
- 
- George Marsaglia
- */
-
-/*
- Hi,
- 
- if we have two sphere, S1 and S2, their intersection will be a circle
- C (suppose that the intersection of the two spheres exist and it is
- not a point). On S1 and S2 we will have a two spherical caps. C will
- be the border of the spherical cap.
- 
- There is an efficient way to generate random points on one of the
- spherical cap ?
- 
- One way that should work well, if the radius of the circle is small,
- is to generate a point p on the corresponding disk and to compute the
- intersection of the ray o-p with the sphere S1 (for example), where o
- is the center of S1.
- 
- But if the radius of the circle is not small, the disk will not be a
- good approximation of the spherical cap, so the points will not be
- uniformly distributed on the cap...
- 
- Thank you
- Luca
- Reply With Quote Reply With Quote
- 12-11-2007 09:39 PM #2
- Default Re: Random points on a spherical cap
- <kingpin@freemail.it> wrote in message
- news:96bb8ce2-0d44-4b94-b5ec-9ee829e485e7@p69g2000hsa.googlegroups.com...
- 
- To generate random points on the spherical cap for S1, let K1 be
- the sphere center and let R1 be the sphere radius. Let A be the
- circle center and let S be the circle radius. Compute
- W = (A-K1)/Length(A-K1). Choose U and V to be unit-length
- vectors so that {U,V,W} is an orthonormal set (mutually
- perpendicular, all unit-length).
- 
- Select a random angle t in [0,2*pi) and a random length L in [0,S].
- The point P = A + L*(cos(t)*U + sin(t)*V) lies inside the circle.
- Define D = P - K1. The corresponding point on the spherical cap is
- Q = R1*D/Length(D).
- 
- --
- Dave Eberly
- http://www.geometrictools.com
- 
- */
 
 
 
