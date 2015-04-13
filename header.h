@@ -80,7 +80,7 @@ public:
         celC                = 0;
         KbT                 = 0;
     }
-    simParameters(string fileName_, MCParameters params){
+    simParameters(string fileName_, MonteCarlo::MCParameters params){
         fileName            = fileName_;
         isDomainWalls       = 0;
         directionOfDomain   = 0;

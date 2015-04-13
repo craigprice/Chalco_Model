@@ -64,11 +64,11 @@ public:
     
     //Number of configurations performed before calculating
     //the Fourier Transform.
-    const static int UPDATESTOFT = 1000*4000*10;
+    const static int UPDATESTOFT = 20*1000; //1% of the metropolis sweep is 2000
     
     //Number of configurations performed before calculating the
     //correlation function
-    const static int UPDATESTOCORR = 10000*20;
+    const static int UPDATESTOCORR = 4;//This doesn't actually take that long
     
     //Number of sublattices
     const static uint_fast8_t NUMSUBLATTICES = 4;

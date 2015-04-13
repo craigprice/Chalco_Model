@@ -85,27 +85,34 @@ int main(int argc, char*argv[]){
         std::cerr<<"inputs"<<std::endl;
         exit(3161990);
     }
-    //int numSweeps             =  500 * 1000;
-    double durationOfSingleRun = 1/60.0;
-    int minSweepsToThermalize = 2300;//100 * 1000;
+    double durationOfSingleRun = 20/60.0;
+    int minSweepsToThermalize = 100 * 1000;
     int numSweepsBetwnConfigs = 6;
     bool outOfTime = false;
+    /*
+    //int numSweeps             =  500 * 1000;
     clock_t c0, c1;
-    c0 = clock();
     MC -> metropolisSweep();
     MC -> updateOrderParameters();
-    //MC -> updateRunningSumOP();
+    MC -> updateRunningSumOP();
     
     MC -> metropolisSweep();
     MC -> updateOrderParameters();
-    //MC -> updateRunningSumOP();
+    MC -> updateRunningSumOP();
+    
+    c0 = clock();
     for (int i = 0; i < 20*1000; i++){
-        MC -> metropolisSweep();
+        //MC -> metropolisSweep();
         //MC -> updateRunningSumOP();
     }
-    //MC -> updateFourierTransformOnRecipLattice();
-    //MC -> updateCorrelationFunction();
     
+    
+    for (int i = 0; i < 20*1000; i++){
+        MC -> metropolisSweep();
+        MC -> updateCorrelationFunction();
+        //MC -> updateFourierTransformOnRecipLattice();
+    }
+    */
     /*
     double temp = 100;
     int count = 0;
@@ -115,11 +122,12 @@ int main(int argc, char*argv[]){
         cout << count << " " << temp << endl;
     }
      */
+    /*
     c1 = clock();
     std::cout<<"Clocks: " << (c1-c0)/(1000*1000.0) << std::endl;
     MC -> finalPrint();
     exit(0);
-    
+    */
     //
     //Runs the lattice without taking data at these temperatures to get the
     //spins pointed in approximately the correct direction.

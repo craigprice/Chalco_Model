@@ -225,7 +225,7 @@ int main(){
                                             //iphi << " ibfield: " << ibfield << " icube: " << icube << " ij2: " <<
                                             //ij2 << " ij3: " << ij3 << " ik2: " << k2 << " ialpha: " << ialpha << endl;
                                             
-                                            MCParameters input_parameters;
+                                            MonteCarlo::MCParameters input_parameters;
                                             input_parameters.j1     =           1;
                                             input_parameters.j2     =           ij2;
                                             input_parameters.j3     =           ij3;
