@@ -6,20 +6,17 @@
  updates to achieve our statistical uncertainty requirements, and then print
  out the result of our simulation to a text file.
  
- @author Craig Price (ccp134@psu.edu)
- @version 1.0 2015/03/04
+ @author Craig Price  (ccp134@psu.edu)
+ @version 3.0 2015/04/12
  */
 
 #include <sstream>
-#include <iostream>
-#include <fstream>
-#include <cmath>
 #include <ctime>
 #include "MonteCarlo.h"
 #include "MonteCarlo.cpp"
 
 int main(int argc, char*argv[]){
-    if(argc != 22 && argc != 4){
+    if(argc != 23 && argc != 4){
         std::cerr << "Need correct inputs" << std::endl;
         return 1;
     }
@@ -27,52 +24,56 @@ int main(int argc, char*argv[]){
     MonteCarlo::MCParameters input_parameters;
     
     MonteCarlo* MC;// = new MonteCarlo();
+    
     //delete MC;
-    if(argc == 22){
-        input_parameters.j1     =           atof(argv[2]);
-        input_parameters.j2     =           atof(argv[3]);
-        input_parameters.j3     =           atof(argv[4]);
-        input_parameters.k1     =           atof(argv[5]);
-        input_parameters.k2     =           atof(argv[6]);
-        input_parameters.k3     =           atof(argv[7]);
+    if(argc == 23){
         
-        input_parameters.cubicD =           atof(argv[8]);
-        
-        // B field Not necessarily normalized
-        input_parameters.isBField    = (bool)   (atoi(argv[9]));
-        input_parameters.bField_x    =           atof(argv[10]);
-        input_parameters.bField_y    =           atof(argv[11]);
-        input_parameters.bField_z    =           atof(argv[12]);
-        input_parameters.bFieldMag   =           atof(argv[13]);
-        
-        
-        input_parameters.cellsA      =           atoi(argv[14]);
-        input_parameters.cellsB      =           atoi(argv[15]);
-        input_parameters.cellsC      =           atoi(argv[16]);
-        
-        if((input_parameters.cellsA > 255)||
-           (input_parameters.cellsB > 255)||
-           (input_parameters.cellsC > 255)){
+        if((atoi(argv[2]) > 255)||//cellsA
+           (atoi(argv[3]) > 255)||//cellsB
+           (atoi(argv[4]) > 255)){//cellsC
             std::cout << "Lattice Index > 255. Make larger sublattice." << std::endl;
             exit(1);
         }
         
-        input_parameters.KbT         =           atof(argv[17]);
+        input_parameters.cellsA      =           atoi(argv[2]);
+        input_parameters.cellsB      =           atoi(argv[3]);
+        input_parameters.cellsC      =           atoi(argv[4]);
         
-        input_parameters.estimatedTc =           atof(argv[18]);
-        input_parameters.numSweepsToPerformTotal = atoi(argv[19]);
-        input_parameters.path        =           argv[20];
+        input_parameters.KbT         =           atof(argv[5]);
         
-        if (atoi(argv[21]) == -1){
+        input_parameters.estimatedTc =           atof(argv[6]);
+        input_parameters.numSweepsToPerformTotal = atoi(argv[7]);
+        input_parameters.path        =           argv[8];
+        
+        
+        if (atoi(argv[9]) == -1){
             //Set the random seed.
             input_parameters.monte_carlo_seed = (unsigned long) time(0);
         }else{
             //Set the seed from the command line
-            input_parameters.monte_carlo_seed = atoi(argv[21]);
+            input_parameters.monte_carlo_seed = atoi(argv[9]);
         }
         
         input_parameters.monte_carlo_seed = 10;
         srand48( input_parameters.monte_carlo_seed );
+        
+        // B field Not necessarily normalized
+        input_parameters.isBField    = (bool)   (atoi(argv[10]));
+        input_parameters.bField_x    =           atof(argv[11]);
+        input_parameters.bField_y    =           atof(argv[12]);
+        input_parameters.bField_z    =           atof(argv[13]);
+        input_parameters.bFieldMag   =           atof(argv[14]);
+        
+        input_parameters.j1     =           atof(argv[15]);
+        input_parameters.j2     =           atof(argv[16]);
+        input_parameters.j3     =           atof(argv[17]);
+        input_parameters.k1     =           atof(argv[18]);
+        input_parameters.k2     =           atof(argv[19]);
+        input_parameters.k3     =           atof(argv[20]);
+        
+        input_parameters.cubicD =           atof(argv[21]);
+        input_parameters.param1 =           atof(argv[22]);
+        
         
         MC = new MonteCarlo(input_parameters);
         
@@ -86,27 +87,46 @@ int main(int argc, char*argv[]){
     }
     //int numSweeps             =  500 * 1000;
     double durationOfSingleRun = 1/60.0;
-    int minSweepsToThermalize = 100 * 1000;
+    int minSweepsToThermalize = 2300;//100 * 1000;
     int numSweepsBetwnConfigs = 6;
     bool outOfTime = false;
-    //MC -> outputMag = "out.txt";
     clock_t c0, c1;
     c0 = clock();
-    for (int i = 0; i < 500; i++){
+    MC -> metropolisSweep();
+    MC -> updateOrderParameters();
+    //MC -> updateRunningSumOP();
+    
+    MC -> metropolisSweep();
+    MC -> updateOrderParameters();
+    //MC -> updateRunningSumOP();
+    for (int i = 0; i < 20*1000; i++){
         MC -> metropolisSweep();
+        //MC -> updateRunningSumOP();
     }
+    //MC -> updateFourierTransformOnRecipLattice();
+    //MC -> updateCorrelationFunction();
+    
+    /*
+    double temp = 100;
+    int count = 0;
+    while(temp > 0.01){
+        temp = temp * 0.99;
+        count = count + 1;
+        cout << count << " " << temp << endl;
+    }
+     */
     c1 = clock();
     std::cout<<"Clocks: " << (c1-c0)/(1000*1000.0) << std::endl;
+    MC -> finalPrint();
     exit(0);
-    //MC -> updateFourierTransformOnRecipLattice();
     
     //
     //Runs the lattice without taking data at these temperatures to get the
     //spins pointed in approximately the correct direction.
     std::cout << "Thermalizing" << std::endl;
-    if(MC -> MD.numSweepsUsedToThermalize < (int) (minSweepsToThermalize / 2)){
+    if(MC -> MD.numSweepsUsedToThermalize < (int) (minSweepsToThermalize / 2.0)){
         outOfTime = MC -> thermalize(3.0 * MC -> MCP.estimatedTc,
-                                     (int) (minSweepsToThermalize / 2),
+                                     (int) (minSweepsToThermalize / 2.0),
                                      durationOfSingleRun);
     }
     if((!outOfTime)&&

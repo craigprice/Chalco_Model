@@ -7,11 +7,11 @@ Since the system responds in a quasi-dynamic fashion (only in the sense that it 
 
 The spins are represented by 3D unit vectors, and the particular geometry of the lattice in which the spins live is defined through functions in MonteCarlo.cpp such as "getSpinInXDirection" which specifies which spins are neighbors of each other.
 
-There are five files in the library. The program is setup and run
+There are four files in the library. The program is setup and run
 through the master file, "simulation.cpp" which explicitly takes in the
 input parameters for the simulation via either a command line argument
 that specifies all parameters of the simulation (eg. strength of j2 coupling, number of sites in the a lattice direction, etc) to start a new simulation or via a path to an already existing simulation output file that contains all the information of the simulation to continue running it.
 
-The simulation file creates a "MonteCarlo" object which most significantly contains the lattice of spins that represent our system. The lattice is a four dimensional vector (c++ object of a smarter array) which is populated with "ClassicalSpin" objects.
+The simulation file creates a "MonteCarlo" object which most significantly contains the lattice of spins that represent our system. The lattice is a four dimensional vector (c++ object of a smarter array) which is populated with "ClassicalSpin" structs - which only contain three doubles to represent a unit vector in the cartesian coordinates.
 
 A typical simulation starting from high temperature is broken into two steps, first, a lattice will need to "thermalize" where many configurations of the system are looped over and the system is drawn into a equilibrium state at a specific T. After this period, then we loop over the system at the T that we are interested in, and every few configurations of the lattice, we save all the characteristics of the lattice, summing over quantities such as "Magnetization" and "Susceptibility" for the order parameters that we are interested in. Many millions of configurations are summed in this fashion to obtain a result with small statistical uncertainty.
