@@ -5,7 +5,7 @@
  to continue where it left off.
  
  @author Craig Price  (ccp134@psu.edu)
- @version 3.0 2015/04/12
+ @version 3.0 2015/07/10
  */
 #include <ctime>
 #include <time.h>
@@ -90,94 +90,6 @@ unsigned long int MonteCarlo::findParameterULongInt(unsigned long int currentVal
     }
 }
 
-string MonteCarlo::toStringMCP(){
-    string function = "MonteCarlo::toStringMCP()";
-    cout << "Begin " << function.c_str() << endl;
-    
-    stringstream stream;
-    stream.str("");
-    stream << "Begin " << function.c_str() << endl;
-    
-    stream << "KbT: " << MCP.KbT << endl;
-    stream << "cellsA: " << (int)MCP.cellsA << endl;
-    stream << "cellsB: " << (int)MCP.cellsB << endl;
-    stream << "cellsC: " << (int)MCP.cellsC << endl;
-    stream << "cubicD: " << MCP.cubicD << endl;
-    stream << "j1: " << MCP.j1 << endl;
-    stream << "j2: " << MCP.j2 << endl;
-    stream << "j3: " << MCP.j3 << endl;
-    stream << "k1: " << MCP.k1 << endl;
-    stream << "k2: " << MCP.k2 << endl;
-    stream << "k3: " << MCP.k3 << endl;
-    stream << "param1: " << MCP.param1 << endl;
-    stream << "isBField: " << MCP.isBField << endl;
-    stream << "bField_x: "<< MCP.bField_x << endl;
-    stream << "bField_y: "<< MCP.bField_y << endl;
-    stream << "bField_z: "<< MCP.bField_z << endl;
-    stream << "bFieldMag: "<< MCP.bFieldMag << endl;
-    stream << "estimatedTc: " << MCP.estimatedTc << endl;
-    
-    stream << "numSweepsToPerformTotal: " <<
-    MCP.numSweepsToPerformTotal << endl;
-    
-    stream << "monte_carlo_seed: " << MCP.monte_carlo_seed << endl;
-    
-    stream << "Finish " << function.c_str() << endl;
-    return stream.str();
-}
-
-void MonteCarlo::readStringMCP(ifstream &readline){
-    string function = "MonteCarlo::readStringMCP(ifstream &readline)";
-    cout << "Begin " << function.c_str() << endl;
-    
-    string line = "";
-    while(readline.good()){
-        getline(readline, line);
-        //cout << line << endl;
-        
-        MCP.j1 = findParameterDbl(MCP.j1, line, "j1: ");
-        MCP.j2 = findParameterDbl(MCP.j2, line, "j2: ");
-        MCP.j3 = findParameterDbl(MCP.j3, line, "j3: ");
-        MCP.k1 = findParameterDbl(MCP.k1, line, "k1: ");
-        MCP.k2 = findParameterDbl(MCP.k2, line, "k2: ");
-        MCP.k3 = findParameterDbl(MCP.k3, line, "k3: ");
-        MCP.cubicD = findParameterDbl(MCP.cubicD, line, "cubicD: ");
-        MCP.param1 = findParameterDbl(MCP.param1, line, "param1: ");
-        
-        MCP.isBField = findParameterInt(MCP.isBField, line, "isBField: ");
-        MCP.bField_x = findParameterDbl(MCP.bField_x, line, "bField_x: ");
-        MCP.bField_y = findParameterDbl(MCP.bField_y, line, "bField_y: ");
-        MCP.bField_z = findParameterDbl(MCP.bField_z, line, "bField_z: ");
-        MCP.bFieldMag = findParameterDbl(MCP.bFieldMag, line, "bFieldMag: ");
-        
-        MCP.cellsA = findParameterInt(MCP.cellsA, line, "cellsA: ");
-        MCP.cellsB = findParameterInt(MCP.cellsB, line, "cellsB: ");
-        MCP.cellsC = findParameterInt(MCP.cellsC, line, "cellsC: ");
-        
-        MCP.KbT = findParameterDbl(MCP.KbT, line, "KbT: ");
-        MCP.estimatedTc = findParameterDbl(MCP.estimatedTc,
-                                           line,
-                                           "estimatedTc: ");
-        MCP.numSweepsToPerformTotal =
-        findParameterInt(MCP.numSweepsToPerformTotal,
-                         line,
-                         "numSweepsToPerformTotal: ");
-        MCP.monte_carlo_seed =
-        findParameterULongInt(MCP.monte_carlo_seed,
-                              line,
-                              "monte_carlo_seed: ");
-        
-        
-        if(line.compare("Finish MonteCarlo::toStringMCP()") == 0){
-            break;
-        }
-        
-    }
-    
-    //cout << toStringMCP() << endl;
-    
-}
-
 string MonteCarlo::toStringMD(){
     string function = "MonteCarlo::toStringMD()";
     cout << "Begin " << function.c_str() << endl;
@@ -198,9 +110,8 @@ string MonteCarlo::toStringMD(){
     stream << "numSweepsUsedToThermalize: " <<
     MD.numSweepsUsedToThermalize << endl;
     stream << "numSweepsPerformed: " << MD.numSweepsPerformed << endl;
-    stream << "timeOfInitialization: " << MD.timeOfInitialization << endl;
-    stream << "totalTimeRunning: " << MD.totalTimeRunning << endl;
-    stream << "numClockOverflows: " << MD.numClockOverflows << endl;
+    stream << "timeAtThisJobInitialization: " << MD.timeAtThisJobInitialization << endl;
+    stream << "totalTime: " << MD.totalTime << endl;
     
     stream << "Flip Success percentage: " <<
     MD.successfulFlips/(1.0*MD.flipAttempts)<<endl;
@@ -246,13 +157,13 @@ void MonteCarlo::readStringMD(ifstream &readline){
                          "numSweepsUsedToThermalize: ");
         
         
-        MD.totalTimeRunning = findParameterInt(MD.totalTimeRunning,
+        MD.timeAtThisJobInitialization = findParameterInt(MD.timeAtThisJobInitialization,
                                                line,
-                                               "totalTimeRunning: ");
+                                               "timeAtThisJobInitialization: ");
         
-        MD.numClockOverflows = findParameterInt(MD.numClockOverflows,
+        MD.totalTime = findParameterInt(MD.totalTime,
                                                 line,
-                                                "numClockOverflows: ");
+                                                "totalTime: ");
         
         MD.numSweepsPerformed = findParameterInt(MD.numSweepsPerformed,
                                                  line,
@@ -533,10 +444,10 @@ void MonteCarlo::readStringSpinSnapshot(ifstream &readline){
     double zdoub = 0;
     getline(readline, line);
     
-    for(int c = 0; c < MCP.cellsC; c++){
-        for(int a = 0; a < MCP.cellsA; a++){
-            for(int b = 0; b < MCP.cellsB; b++){
-                for(int s = 0; s < NUMSUBLATTICES; s++){
+    for(uint_fast8_t c = 0; c < MCP.cellsC; c++){
+        for(uint_fast8_t a = 0; a < MCP.cellsA; a++){
+            for(uint_fast8_t b = 0; b < MCP.cellsB; b++){
+                for(uint_fast8_t s = 0; s < NUMSUBLATTICES; s++){
                     getline(readline, line);
                     //cout << line << endl;
                     ss.clear();
@@ -771,10 +682,10 @@ void MonteCarlo::readStringSumOverFourierTransform(ifstream &readline){
     double magdoub = 0;
     getline(readline, line);
     
-    for(int c = 0; c < MCP.cellsC; c++){
-        for(int a = 0; a < MCP.cellsA; a++){
-            for(int b = 0; b < MCP.cellsB; b++){
-                for(int s = 0; s < NUMSUBLATTICES; s++){
+    for(uint_fast8_t c = 0; c < MCP.cellsC; c++){
+        for(uint_fast8_t a = 0; a < MCP.cellsA; a++){
+            for(uint_fast8_t b = 0; b < MCP.cellsB; b++){
+                for(uint_fast8_t s = 0; s < NUMSUBLATTICES; s++){
                     getline(readline, line);
                     //cout << line << endl;
                     ss.clear();

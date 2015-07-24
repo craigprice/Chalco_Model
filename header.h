@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <cmath>
 #include <unistd.h>
-const static double PI = 3.14159265358979323846;
+//const static double PI = 3.14159265358979323846;
 #include "lib/MonteCarlo.h"
 using namespace std;
 
@@ -39,6 +39,7 @@ public:
     double  K1;
     double  K2;
     double  K3;
+    double  param1;
     bool    isCub;
     double  D;
     bool    isB;
@@ -61,11 +62,13 @@ public:
         a                   = 0;
         isJ23               = false;
         isK12               = false;
-        J1                  = 0;
-        K1                  = 0;
+        J1                  = 1;
         J2                  = 0;
         J3                  = 0;
+        K1                  = 0;
         K2                  = 0;
+        K3                  = 0;
+        param1              = 0;
         isCub               = false;
         D                   = 0;
         isB                 = false;
@@ -80,7 +83,7 @@ public:
         celC                = 0;
         KbT                 = 0;
     }
-    simParameters(string fileName_, MonteCarlo::MCParameters params){
+    simParameters(string fileName_, MCParameters params){
         fileName            = fileName_;
         isDomainWalls       = 0;
         directionOfDomain   = 0;
@@ -95,7 +98,7 @@ public:
         K1                  = params.k1;
         K2                  = params.k2;
         K3                  = params.k3;
-        isCub               = 1;
+        isCub               = 0;
         D                   = params.cubicD;
         isB                 = params.isBField;
         bx                  = params.bField_x;
@@ -178,6 +181,7 @@ public:
         J2 = J2_;
         J3 = J3_;
         K2 = K2_;
+        J1 = 1;
     }
     void setK12(bool isK12_, double J1_, double K1_, double J2_, double K2_, double J3_){
         isK12 = isK12_;
@@ -221,6 +225,7 @@ public:
         cout << "K1:..........................." << K1 << endl;
         cout << "K2:..........................." << K2 << endl;
         cout << "K3:..........................." << K3 << endl;
+        cout << "P1:..........................." << param1 << endl;
         cout << "D:............................" << D << endl;
         cout << "isB:.........................." << isB << endl;
         cout << "bx:..........................." << bx << endl;
@@ -309,7 +314,6 @@ bool isMatchParameters(const simParameters sp, const simParameters sp2) {
        (fabs(sp.K1              -  sp2.K1) < eps)&&
        (fabs(sp.K2              -  sp2.K2) < eps)&&
        (fabs(sp.K3              -  sp2.K3) < eps)&&
-       (sp.isCub                == sp2.isCub)&&
        (fabs(sp.D               -  sp2.D) < eps)&&
        (sp.isB                  == sp2.isB)&&
        (fabs(sp.bx              -  sp2.bx) < eps)&&
@@ -380,12 +384,14 @@ public:
     double valueDbl;
     int valueInt;
     bool valueBool;
+    bool isExtracted;
     extractedValueWithSimParam(){
         paramName = "";
         originalLineInFile = "";
         valueDbl = 0;
         valueInt = 0;
         valueBool = 0;
+        isExtracted = false;
     }
     void toString(){
         cout << endl;
@@ -752,7 +758,7 @@ string reSubmitFileName(const vector<simParameters> &allSimFiles_, simParameters
     string simFileName = "";
     for (int i = 0; i < allSimFiles_.size(); i++)
     {
-        //cout<< allSimFiles_[i].fileName<<endl;
+        cout<< allSimFiles_[i].fileName<<endl;
         if(isMatchParameters(sp_, allSimFiles_[i]))
         {
             return allSimFiles_[i].fileName;

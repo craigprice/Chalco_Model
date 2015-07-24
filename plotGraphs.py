@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 
-import numpy as np
+import numpy
 import matplotlib.pyplot as plt
 import math
 import sys
@@ -36,77 +36,75 @@ for f in graphFiles:
         #continue
     #myfile = open(f,'r')
     myfile = open('readyToPlot/'+f,'r')
-    graphTitle = ''
-    if f.find('K1_1') != -1         and f.find('K2_0') != -1:       graphTitle += r'$\varphi = 0$'
-    if f.find('K1_0.707') != -1     and f.find('K2_0.707') != -1:   graphTitle += r'$\varphi = \frac{\Pi}{4}$'
-    if f.find('K1_0') != -1         and f.find('K2_1') != -1:       graphTitle += r'$\varphi = \frac{\Pi}{2}$'
-    if f.find('K1_-0.707') != -1    and f.find('K2_0.707') != -1:   graphTitle += r'$\varphi = \frac{3\Pi}{4}$'
-    if f.find('K1_-1') != -1        and f.find('K2_0') != -1:       graphTitle += r'$\varphi = \Pi$'
-    if f.find('K1_-0.707') != -1    and f.find('K2_-0.707') != -1:  graphTitle += r'$\varphi = \frac{5\Pi}{4}$'
-    if f.find('K1_0') != -1         and f.find('K2_-1') != -1:      graphTitle += r'$\varphi = \frac{3\Pi}{2}$'
-    if f.find('K1_0.707') != -1     and f.find('K2_-0.707') != -1:  graphTitle += r'$\varphi = \frac{7\Pi}{4}$'
-    if f.find('SpecificHeat') != -1: graphTitle += ', C'
-    if f.find('Energy') != -1: graphTitle += ', E'
-    xaxis = []
-    yaxis = []
-    pair = []
+    graphTitle = pieces[len(pieces)-1][:-4]
+    data = {}#{kbt,{cellsA, value}}
+    cells = []
     print f
     for line in myfile:
-        xaxis.append(float(line[:line.find(' ')]))
-        yaxis.append(float(line[line.find(' '):]))
-        pair.append([float(line[:line.find(' ')]),float(line[line.find(' '):])])
+        line = line.strip()
+        pieces = line.split()
+        data.update({pieces[0]: {}})
+        for p in range(1, len(pieces), 2):
+            data[pieces[0]].update({pieces[p]: pieces[p+1]})
+            if pieces[p] not in cells:
+                cells.append(pieces[p])
+    myfile.close()
     fig = plt.figure()
-    def getKey(item):
-        return item[0]
-    pair = sorted(pair, key=getKey)
+    curve = []
     xaxis = []
-    yaxis = []
-    for p in pair:
-        xaxis.append(p[0])
-        yaxis.append(p[1])
-#ave = (yaxis[0] + yaxis[1] + yaxis[2])/3.0
- #   if yaxis[0] > 0.5:
-#      print yaxis[0]
-#continue
-    plt.plot(xaxis, yaxis, 'r-o')
+    #print data
+    #print cells
+    color=iter(plt.cm.rainbow(numpy.linspace(0,1,len(cells))))
+    for c in range(len(cells)):
+        for kbt in data.keys():
+            try:
+                #print kbt
+                #print data[kbt]
+                #print data[kbt][cells[c]]
+                curve.append(float(data[kbt][cells[c]]))
+                xaxis.append(float(kbt))
+            except KeyError:
+                print "missing cells:", cells[c], "kbt:", kbt
+                
+        c=next(color)
+        plt.plot(xaxis, curve, color=c, marker='o', linestyle='None')
+        xaxis = []
+        curve = []
     ax = plt.axes()
     #ax.set_aspect(1./ax.get_data_ratio())
- #   plt.xlabel('B')
+    #plt.xlabel('B')
     font_size = 24
     plt.xlabel('T',fontsize=font_size)
     ax.yaxis.labelpad = 15
     if opName == "SpecificHeat":
+        pass
         plt.ylabel('C',rotation='horizontal', fontsize=font_size)
     else:
-        plt.ylabel('E', rotation='horizontal', fontsize=font_size)
+        pass
+        #plt.ylabel('E', rotation='horizontal', fontsize=font_size)
             
         
     #plt.ylabel(opName)
     plt.minorticks_on
     #plt.grid(True, which='both')
-    plt.title(graphTitle[0:-3],y=1.03,fontsize=font_size)
+    plt.title(opName,y=1.03,fontsize=font_size)
     ax.tick_params(axis='x', labelsize=font_size)
     ax.tick_params(axis='y', labelsize=font_size)
     #plt.subplots_adjust(right = 0.8)
-    plt.ylim(min(yaxis)-0.1,max(yaxis)+0.1)
+    #plt.ylim(min(yaxis)-0.1,max(yaxis)+0.1)
     if opName[:6] == "Binder":
-        plt.ylim(0,0.67)
+        #plt.ylim(0,0.67)
+        pass
     if opName[:13] == "Magnetization":
-        plt.ylim(0,1)
-#popt = []
-#pcov = []
-#if opName[:6] == "Binder":
-#guess = (0.4,0.01,2.0/3.0)#mu, t, n
-#plt.plot(xaxis,fermiDirac(np.asarray(xaxis), guess[0], guess[1], guess[2]), 'r-',ls='-')
-#popt,pcov = curve_fit(fermiDirac, xaxis, yaxis, guess)
-#for p in popt:
-#fit = fermiDirac(xaxis, *popt)
-#plt.plot(xaxis, fit, 'g-',ls='-')
-    #plt.figtext(0.81, 0.25, graphDescription)
+        #plt.ylim(0,1)
+        pass
+    plt.figtext(0.81, 0.15, graphDescription)
     #plt.savefig('figures/'+ f[f.find('/'):-4] + '.png')
     #plt.savefig('figures/'+ f[:-4] + '.png')
     #plt.savefig('figures/'+ graphTitle.replace('/','_') + '.png', dpi = 100)
     #plt.savefig('figures/eps/'+ graphTitle.replace('/','_') + '.eps', dpi = 150)
-    plt.savefig('figures/'+ graphTitle.strip().replace('\\','') + '.pdf',dpi=100)
+    plt.savefig('figures/'+ f[:-4].strip().replace('\\','') + '.pdf',dpi=100)
+    plt.close()
+    #exit()
 
 print "\a"

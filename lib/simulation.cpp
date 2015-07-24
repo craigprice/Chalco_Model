@@ -7,7 +7,7 @@
  out the result of our simulation to a text file.
  
  @author Craig Price  (ccp134@psu.edu)
- @version 3.0 2015/04/12
+ @version 3.0 2015/07/10
  */
 
 #include <sstream>
@@ -21,7 +21,7 @@ int main(int argc, char*argv[]){
         return 1;
     }
     
-    MonteCarlo::MCParameters input_parameters;
+    MCParameters input_parameters;
     
     MonteCarlo* MC;// = new MonteCarlo();
     
@@ -35,9 +35,9 @@ int main(int argc, char*argv[]){
             exit(1);
         }
         
-        input_parameters.cellsA      =           atoi(argv[2]);
-        input_parameters.cellsB      =           atoi(argv[3]);
-        input_parameters.cellsC      =           atoi(argv[4]);
+        input_parameters.cellsA      = (uint_fast8_t) atoi(argv[2]);
+        input_parameters.cellsB      = (uint_fast8_t) atoi(argv[3]);
+        input_parameters.cellsC      = (uint_fast8_t) atoi(argv[4]);
         
         input_parameters.KbT         =           atof(argv[5]);
         
@@ -54,8 +54,8 @@ int main(int argc, char*argv[]){
             input_parameters.monte_carlo_seed = atoi(argv[9]);
         }
         
-        input_parameters.monte_carlo_seed = 10;
-        srand48( input_parameters.monte_carlo_seed );
+        //input_parameters.monte_carlo_seed = 10;
+        //srand48( input_parameters.monte_carlo_seed );
         
         // B field Not necessarily normalized
         input_parameters.isBField    = (bool)   (atoi(argv[10]));
@@ -85,10 +85,6 @@ int main(int argc, char*argv[]){
         std::cerr<<"inputs"<<std::endl;
         exit(3161990);
     }
-    double durationOfSingleRun = 20/60.0;
-    int minSweepsToThermalize = 100 * 1000;
-    int numSweepsBetwnConfigs = 6;
-    bool outOfTime = false;
     /*
     //int numSweeps             =  500 * 1000;
     clock_t c0, c1;
@@ -131,35 +127,24 @@ int main(int argc, char*argv[]){
     //
     //Runs the lattice without taking data at these temperatures to get the
     //spins pointed in approximately the correct direction.
-    std::cout << "Thermalizing" << std::endl;
-    if(MC -> MD.numSweepsUsedToThermalize < (int) (minSweepsToThermalize / 2.0)){
-        outOfTime = MC -> thermalize(3.0 * MC -> MCP.estimatedTc,
-                                     (int) (minSweepsToThermalize / 2.0),
-                                     durationOfSingleRun);
-    }
-    if((!outOfTime)&&
-       (MC -> MD.numSweepsUsedToThermalize < minSweepsToThermalize)){
-        outOfTime = MC -> thermalize(MC -> MCP.KbT,
-                                     minSweepsToThermalize,
-                                     durationOfSingleRun);
-    }
+    std::cout << "Check Thermalization" << std::endl;
     
-    while (!(MC -> MD.isThermal) && !outOfTime) {
-        outOfTime = MC -> isThermalized(durationOfSingleRun);
+    if (! MC -> MD.isThermal) {
+        MC -> thermalize();
     }
     
     std::cout << "Sweeping and summing over configurations" << std::endl;
-    if(!outOfTime && MC -> MD.isThermal){
+    if( MC -> MD.isThermal && !MC -> isOutOfTime() ){
         //To run a snapshot, change numSweeps, sweep().
         //MC -> sweepSnapshot(numSweeps, 6, 9);//This hasn't been edited - check function
         
-        MC -> sweep(numSweepsBetwnConfigs,
-                    durationOfSingleRun);
+        MC -> sweep();
     }
-    
-    MC -> MD.totalTimeRunning = (clock() - MC -> MD.timeOfInitialization);
-    double hours_elapsed = MC -> MD.totalTimeRunning * (1.0/(CLOCKS_PER_SEC*1.0)) / (60.0 * 60.0);
-    std::cout << hours_elapsed << std::endl;
+
+    MC -> MD.totalTime = MC -> MD.totalTime + difftime(time(NULL),
+                                                       MC -> MD.timeAtThisJobInitialization);
+    double hours_elapsed = MC -> MD.totalTime / (60.0 * 60.0);
+    std::cout << "hours_elapsed " << hours_elapsed << std::endl;
     MC->finalPrint();
     std::cout << "done!" << std::endl;
     return 0;

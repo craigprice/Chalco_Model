@@ -10,9 +10,9 @@ int main(){
     
     paramSet KbTPar;    KbTPar.name = "KbT";
     KbTPar.min = 0.01;
-    KbTPar.max = 1;
-    KbTPar.inc = 0.5;  KbTPar.isRunParam = true;
-    double estimatedTc = 0.25;
+    KbTPar.max = 3;
+    KbTPar.inc = 0.1;  KbTPar.isRunParam = true;
+    double estimatedTc = 1;
     int numSweepsToPerformTotal = 10 * 1000 * 1000;
     
     paramSet cellsPar;  cellsPar.name = "cells";
@@ -225,7 +225,7 @@ int main(){
                                             //iphi << " ibfield: " << ibfield << " icube: " << icube << " ij2: " <<
                                             //ij2 << " ij3: " << ij3 << " ik2: " << k2 << " ialpha: " << ialpha << endl;
                                             
-                                            MonteCarlo::MCParameters input_parameters;
+                                            MCParameters input_parameters;
                                             input_parameters.j1     =           1;
                                             input_parameters.j2     =           ij2;
                                             input_parameters.j3     =           ij3;
@@ -234,15 +234,17 @@ int main(){
                                             input_parameters.k3     =           ik3;
                                             
                                             input_parameters.cubicD =           icube;
+                                            input_parameters.param1 =           0;
+                                            
                                             input_parameters.isBField    = (bool)   (bFieldPar.isHam);
                                             input_parameters.bField_x    =           bFieldPar.bFieldx;
                                             input_parameters.bField_y    =           bFieldPar.bFieldy;
                                             input_parameters.bField_z    =           bFieldPar.bFieldz;
                                             input_parameters.bFieldMag   =           ibfield;
                                             
-                                            input_parameters.cellsA      =           icells;
-                                            input_parameters.cellsB      =           icells;
-                                            input_parameters.cellsC      =           1;
+                                            input_parameters.cellsA      =           (uint8_t) icells;
+                                            input_parameters.cellsB      =           (uint8_t) icells;
+                                            input_parameters.cellsC      =           (uint8_t) 1;
                                             
                                             input_parameters.KbT         =           ikbt;
                                             
@@ -260,18 +262,19 @@ int main(){
                                             ss << "_" << "K2_" <<       input_parameters.k2;
                                             ss << "_" << "K3_"<<        input_parameters.k3;
                                             ss << "_" << "D_" <<        input_parameters.cubicD;
+                                            ss << "_" << "P1_" <<       input_parameters.param1;
                                             ss << "_" << "isB_" <<      input_parameters.isBField;
                                             ss << "_" << "bx_" <<       input_parameters.bField_x;
                                             ss << "_" << "by_" <<       input_parameters.bField_y;
                                             ss << "_" << "bz_" <<       input_parameters.bField_z;
                                             ss << "_" << "bMag_" <<     input_parameters.bFieldMag;
-                                            ss << "_" << "celA_" <<     input_parameters.cellsA;
-                                            ss << "_" << "celB_" <<     input_parameters.cellsB;
-                                            ss << "_" << "celC_" <<     input_parameters.cellsC;
+                                            ss << "_" << "celA_" <<     (int) input_parameters.cellsA;
+                                            ss << "_" << "celB_" <<     (int) input_parameters.cellsB;
+                                            ss << "_" << "celC_" <<     (int) input_parameters.cellsC;
                                             ss << "_" << "KbT_" <<      input_parameters.KbT;
                                             string bareFileName = ss.str();
                                             
-                                            //cout<< fileName.str()<<endl;
+                                            cout<< "Checking: " << bareFileName<<"\n"<<endl;
                                             simParameters sp(bareFileName, input_parameters);
                                             
                                             
@@ -293,27 +296,33 @@ int main(){
                                             
                                             //Begin Writing Arguments of Simulation/////
                                             ss.str("");
-                                            ss << "arguments = 21" << " " <<
+                                            ss << "arguments = 23" << " " <<
+                                            (int) input_parameters.cellsA << " " <<
+                                            (int) input_parameters.cellsB << " " <<
+                                            (int) input_parameters.cellsC << " " <<
+                                            input_parameters.KbT << " " <<
+                                            
+                                            estimatedTc << " " <<
+                                            numSweepsToPerformTotal << " " <<
+                                            //"/scratch/cprice/" << folderName << "/dataFiles/" << fileName.str() << ".txt ";
+                                            bareFileName << ".txt" << " " <<
+                                            "-1" << " " << //Random seed
+                                            
+                                            input_parameters.isBField << " " <<
+                                            input_parameters.bField_x << " " <<
+                                            input_parameters.bField_y << " " <<
+                                            input_parameters.bField_z << " " <<
+                                            input_parameters.bFieldMag << " " <<
+                                            
                                             input_parameters.j1 << " " <<
                                             input_parameters.j2 << " " <<
                                             input_parameters.j3 << " " <<
                                             input_parameters.k1 << " " <<
                                             input_parameters.k2 << " " <<
                                             input_parameters.k3 << " " <<
+                                            
                                             input_parameters.cubicD << " " <<
-                                            input_parameters.isBField << " " <<
-                                            input_parameters.bField_x << " " <<
-                                            input_parameters.bField_y << " " <<
-                                            input_parameters.bField_z << " " <<
-                                            input_parameters.bFieldMag << " " <<
-                                            input_parameters.cellsA << " " <<
-                                            input_parameters.cellsB << " " <<
-                                            input_parameters.cellsC << " " <<
-                                            input_parameters.KbT << " " <<
-                                            estimatedTc << " " <<
-                                            numSweepsToPerformTotal << " " <<
-                                            //"/scratch/cprice/" << folderName << "/dataFiles/" << fileName.str() << ".txt ";
-                                            bareFileName << ".txt ";
+                                            input_parameters.param1;
                                             string argumentsString = ss.str();
                                             
                                             if (reSubFileName.compare("0") != 0)
@@ -403,7 +412,7 @@ int main(){
         cout<<"Don't Quit! - Processing..."<<endl;
         system("condor_release nperkins");
         sleep(2);
-        system("ls sim_isDom_*.txt > _tempSubmit.txt");
+        system("ls sim_*.txt > _tempSubmit.txt");
         sleep(2);
         ifstream tempFile;
         tempFile.open("_tempSubmit.txt");
@@ -415,7 +424,7 @@ int main(){
         string line = "";
         while(tempFile.good()){
             getline (tempFile,line);
-            if(line.find("sim_isDom") == string::npos) continue;
+            if(line.find("sim_") == string::npos) continue;
             stringstream ss;
             ss.str("");
             //ss << "cat " << line << " >> dataFiles/" << line;
@@ -425,7 +434,7 @@ int main(){
         }
         tempFile.close();
         system("rm -f _tempSubmit.txt");
-        system("rm -f sim_isDom_*.txt");
+        //system("rm -f sim_*.txt");
         sleep(2);
     }
     
